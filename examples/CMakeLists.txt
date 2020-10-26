@@ -1,4 +1,4 @@
-option ( SERVER_CLIB_BUILD_EXAMPLES "Build examples (ON OR OFF)" ON)
+option ( SERVER_CLIB_BUILD_EXAMPLES "Build examples (ON OR OFF)" OFF)
 
 if ( SERVER_CLIB_BUILD_EXAMPLES )
 
