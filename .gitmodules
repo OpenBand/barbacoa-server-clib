@@ -1,0 +1,3 @@
+[submodule "vendors/jsmn"]
+	path = vendors/jsmn
+	url = ../jsmn.git

@@ -1,16 +1,10 @@
-/*
- * Copyright (c) 2019 Andrew Masilevich (a.masilevich@gmail.com)
- *
- * The MIT License
- *
- */
-
 #pragma once
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <assert.h>
 
 #include "exit_codes.h"
 
@@ -147,3 +141,13 @@ inline void _SRV_C_TRACE(const char* t_file, int t_line, const char* info)
         __typeof__(b) _b = (b); \
         _a < _b ? _a : _b;      \
     })
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// tests
+//  If NDEBUG is defined as a macro name at the point in the source code where <cassert> is included, then assert does
+//  nothing.
+#ifndef assertm
+#define assertm(exp, msg) assert(((void)msg, exp))
+// example:
+//      assertm(timestamp == func(key), "test failed");
+#endif

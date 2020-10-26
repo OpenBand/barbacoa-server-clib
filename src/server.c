@@ -1,10 +1,3 @@
-/*
- * Copyright (c) 2019 Andrew Masilevich (a.masilevich@gmail.com)
- *
- * The MIT License
- *
- */
-
 #include <server_clib/server.h>
 #include <server_clib/macro.h>
 

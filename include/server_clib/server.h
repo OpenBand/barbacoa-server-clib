@@ -1,10 +1,3 @@
-/*
- * Copyright (c) 2019 Andrew Masilevich (a.masilevich@gmail.com)
- *
- * The MIT License
- *
- */
-
 #pragma once
 
 #include "common.h"
