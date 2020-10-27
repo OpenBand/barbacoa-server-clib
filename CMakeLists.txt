@@ -2,6 +2,7 @@ project( BarbacoaServerCLib )
 cmake_minimum_required( VERSION 2.8.12 )
 
 if (UNIX)
+
     set(SERVER_CLIB_SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/src/server.c"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/priv_macro.h"
@@ -18,12 +19,9 @@ if (UNIX)
     )
     file(GLOB_RECURSE SERVER_CLIB_IMPL_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h")
-endif()
+    file(GLOB_RECURSE SERVER_CLIB_HEADERS
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/server_clib/*.h")
 
-file(GLOB_RECURSE SERVER_CLIB_HEADERS
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/server_clib/*.h")
-
-if (UNIX)
     find_package(ZLIB REQUIRED)
 
     add_library( server_clib
@@ -38,8 +36,11 @@ if (UNIX)
 
     add_subdirectory( tests )
     add_subdirectory( examples )
+
 else()
+
     add_library( server_clib INTERFACE )
     target_include_directories( server_clib
                  INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include" )
+
 endif()
