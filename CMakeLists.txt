@@ -39,8 +39,7 @@ if (UNIX)
     add_subdirectory( tests )
     add_subdirectory( examples )
 else()
-    add_library( server_clib INTERFACE
-                ${SERVER_CLIB_HEADERS})
+    add_library( server_clib INTERFACE )
     target_include_directories( server_clib
                  INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include" )
 endif()
