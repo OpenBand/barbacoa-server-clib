@@ -139,6 +139,7 @@ bool server_is_fail_signal(int signo)
     case SIGBUS:
     case SIGILL:
     case SIGFPE:
+    case SIGABRT:
         return true;
     default:;
     }
@@ -158,7 +159,7 @@ static void exit_sig_callback(int signo)
 static void wrapped_sig_callback(int signo)
 {
     bool hard = server_is_fail_signal(signo);
-    if (hard)
+    if (hard && signo != SIGABRT)
     {
         if (_fail_flag)
             _exit(exit_code_error);
@@ -179,7 +180,7 @@ static void wrapped_sig_callback(int signo)
         }
     }
 
-    if (hard)
+    if (hard && signo != SIGABRT)
         _exit(exit_code_error);
 }
 
