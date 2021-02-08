@@ -137,10 +137,8 @@ bool server_is_fail_signal(int signo)
     {
     case SIGSEGV:
     case SIGBUS:
-
     case SIGILL:
     case SIGFPE:
-    case SIGABRT: // to unify error processing
         return true;
     default:;
     }
