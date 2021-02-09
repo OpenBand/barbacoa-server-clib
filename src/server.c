@@ -106,6 +106,21 @@ static bool is_final_signal(int signo)
     return false;
 }
 
+bool server_is_fail_signal(int signo)
+{
+    switch (signo)
+    {
+    case SIGSEGV:
+    case SIGBUS:
+    case SIGILL:
+    case SIGFPE:
+    case SIGABRT:
+        return true;
+    default:;
+    }
+    return false;
+}
+
 static bool register_blocked_signal(int signo)
 {
     if (is_signal_registered(signo))
@@ -131,21 +146,6 @@ static pid_t fork_impl()
     return (pid);
 }
 
-bool server_is_fail_signal(int signo)
-{
-    switch (signo)
-    {
-    case SIGSEGV:
-    case SIGBUS:
-    case SIGILL:
-    case SIGFPE:
-    case SIGABRT:
-        return true;
-    default:;
-    }
-    return false;
-}
-
 static void not_exit(void)
 {
 }
@@ -158,8 +158,8 @@ static void exit_sig_callback(int signo)
 
 static void wrapped_sig_callback(int signo)
 {
-    bool hard = server_is_fail_signal(signo);
-    if (hard && signo != SIGABRT)
+    bool fail = server_is_fail_signal(signo);
+    if (fail && signo != SIGABRT)
     {
         if (_fail_flag)
             _exit(exit_code_error);
@@ -171,20 +171,20 @@ static void wrapped_sig_callback(int signo)
 
     if (_sig_callback)
     {
-        if (_sig_callback != exit_sig_callback || !hard)
+        if (_sig_callback != exit_sig_callback || !fail)
         {
-            if (hard)
+            if (fail)
                 atexit(not_exit);
 
             _sig_callback(signo);
         }
     }
 
-    if (hard && signo != SIGABRT)
+    if (fail && signo != SIGABRT)
         _exit(exit_code_error);
 }
 
-static void set_signals_callback(server_sig_callback_ft sig_callback, bool hard_only)
+static void set_signals_callback(server_sig_callback_ft sig_callback, bool fails_only)
 {
     _sig_callback = sig_callback;
 
@@ -193,7 +193,7 @@ static void set_signals_callback(server_sig_callback_ft sig_callback, bool hard_
         if (!is_signal_should_register(sig))
             continue;
 
-        if (!hard_only || server_is_fail_signal(sig))
+        if (!fails_only || server_is_fail_signal(sig))
             register_async_signal(sig, wrapped_sig_callback);
     }
 }
