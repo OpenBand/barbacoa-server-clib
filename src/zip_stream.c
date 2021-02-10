@@ -135,7 +135,7 @@ static long process_context(zip_stream_ctx_t* pctx,
     if (p_input && input_sz)
     {
         strm->avail_in = (uInt)input_sz;
-        strm->next_in = p_input;
+        strm->next_in = (z_const Bytef *)p_input;
     }
     strm->avail_out = (uInt)output_sz;
     strm->next_out = p_output;

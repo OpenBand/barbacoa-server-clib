@@ -8,6 +8,10 @@
 
 #include "exit_codes.h"
 
+#ifdef NDEBUG
+#include <signal.h>
+#endif
+
 #if defined(__gnu_linux__)
 #include <linux/limits.h>
 #else // Linux
@@ -39,61 +43,71 @@
     while (0)
 #endif
 
-#ifndef NDEBUG
-
 #define SRV_C_STDERR_FILENO_ stderr
 
-#define SRV_C_TRACE_INFO_(func, call_mode, e_code, fmt_message, ...)                  \
-    if (!(func))                                                                      \
-    {                                                                                 \
-        char szMSG_FMT[MAX_INPUT] = "";                                               \
-        char szMSG[MAX_INPUT] = "";                                                   \
-        snprintf(szMSG_FMT, sizeof(szMSG_FMT), fmt_message, __VA_ARGS__);             \
-        snprintf(szMSG, sizeof(szMSG), "%s (%d): %s", __FILE__, __LINE__, szMSG_FMT); \
-        if (call_mode && errno != 0)                                                  \
-        {                                                                             \
-            perror(szMSG);                                                            \
-        }                                                                             \
-        else                                                                          \
-        {                                                                             \
-            fprintf(SRV_C_STDERR_FILENO_, "%s\n", szMSG);                             \
-        }                                                                             \
-        if (e_code >= 0)                                                              \
-        {                                                                             \
-            exit(e_code);                                                             \
-        }                                                                             \
-        else                                                                          \
-        {                                                                             \
-            abort();                                                                  \
-        }                                                                             \
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+
+#ifndef NDEBUG
+
+#define SRV_C_FPRINTF_(...) \
+    fprintf(SRV_C_STDERR_FILENO_, __VA_ARGS__);
+
+#else //DEBUG
+
+#define SRV_C_FPRINTF_(...)                                     \
+    {                                                           \
+        sigset_t block_set, prev_set;                           \
+        sigemptyset(&block_set);                                \
+        sigaddset(&block_set, SIGPIPE);                         \
+        if (0 == sigprocmask(SIG_BLOCK, &block_set, &prev_set)) \
+        {                                                       \
+            fprintf(SRV_C_STDERR_FILENO_, __VA_ARGS__);         \
+        }                                                       \
+    }
+
+#endif
+
+#define SRV_C_TERMINATE_(func, call_mode, e_code, fmt_message, ...)                                \
+    if (!(func))                                                                                   \
+    {                                                                                              \
+        char szMSG_FMT[MAX_INPUT] = "";                                                            \
+        char szMSG[MAX_INPUT] = "";                                                                \
+        snprintf(szMSG_FMT, sizeof(szMSG_FMT), fmt_message, __VA_ARGS__);                          \
+        snprintf(szMSG, sizeof(szMSG), "%s (%d) -> %s: %s", __FILE__, __LINE__, #func, szMSG_FMT); \
+        if (call_mode && errno != 0)                                                               \
+        {                                                                                          \
+            perror(szMSG);                                                                         \
+        }                                                                                          \
+        else                                                                                       \
+        {                                                                                          \
+            SRV_C_FPRINTF_("%s\n", szMSG);                                                         \
+        }                                                                                          \
+        if (e_code >= 0)                                                                           \
+        {                                                                                          \
+            exit(e_code);                                                                          \
+        }                                                                                          \
+        else                                                                                       \
+        {                                                                                          \
+            abort();                                                                               \
+        }                                                                                          \
     }
 
 inline void _SRV_C_TRACE(const char* t_file, int t_line, const char* info)
 {
-    fprintf(SRV_C_STDERR_FILENO_, "%s (%d)", t_file, t_line);
+    SRV_C_FPRINTF_("%s (%d)", t_file, t_line)
     if (info)
     {
-        fprintf(SRV_C_STDERR_FILENO_, "\t%s", info);
+        SRV_C_FPRINTF_("\t%s", info)
     }
-    fprintf(SRV_C_STDERR_FILENO_, "\n");
+    SRV_C_FPRINTF_("\n")
 }
 
 #define SRV_C_TRACE_TEXT_(data) _SRV_C_TRACE(__FILE__, __LINE__, data);
 #define SRV_C_TRACE_ _SRV_C_TRACE(__FILE__, __LINE__, NULL);
-#else // DEBUG
-#define SRV_C_TRACE_INFO_(func, call_mode, e_code, fmt_message, ...) \
-    if (!(func))                                                     \
-    {                                                                \
-        exit(e_code);                                                \
-    }
 
-#define SRV_C_TRACE_TEXT_(data) (void)(data)
-#define SRV_C_TRACE_ SRV_C_TRACE_TEXT_(NULL)
-#endif
-
-#define SRV_C_CALL_WITH_EXIT_CODE_(func, e_code) SRV_C_TRACE_INFO_(func, 1, e_code, "%s", #func)
+#define SRV_C_CALL_WITH_EXIT_CODE_(func, e_code) SRV_C_TERMINATE_(func, 1, e_code, "%s", #func)
 #define SRV_C_CHECK_WITH_EXIT_CODE_(cond, e_code, fmt_message, ...) \
-    SRV_C_TRACE_INFO_(cond, 0, e_code, fmt_message, __VA_ARGS__)
+    SRV_C_TERMINATE_(cond, 0, e_code, fmt_message, __VA_ARGS__)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // assert/debug

@@ -40,7 +40,7 @@ size_t rubber_init_from_buff(
 
     pctx->written = 0;
     pctx->rest = pctx->sz;
-    pctx->pos = pctx->pbuff;
+    pctx->pos = (char*)(pctx->pbuff);
 
     return pctx->sz;
 }
@@ -62,12 +62,12 @@ size_t rubber_enlarge(rubber_ctx_t* pctx, const size_t additional_space)
         pctx->pextra_buff = malloc(new_sz);
         if (!pctx->pextra_buff)
             return 0;
-        memcpy(pctx->pextra_buff, pctx->pbuff, old_sz);
+        memcpy((void*)(pctx->pextra_buff), pctx->pbuff, old_sz);
     }
     else
     {
         const char* pbefore = pctx->pextra_buff;
-        pctx->pextra_buff = realloc(pbefore, new_sz);
+        pctx->pextra_buff = realloc((void*)pbefore, new_sz);
         if (!pctx->pextra_buff)
         {
             pctx->pextra_buff = pbefore;
@@ -76,7 +76,7 @@ size_t rubber_enlarge(rubber_ctx_t* pctx, const size_t additional_space)
     }
 
     pctx->sz = new_sz;
-    pctx->pos = pctx->pextra_buff + pctx->written;
+    pctx->pos = (char*)(pctx->pextra_buff) + pctx->written;
     pctx->rest = additional_space;
 
     return pctx->sz;
@@ -86,7 +86,7 @@ size_t rubber_destroy(rubber_ctx_t* pctx)
 {
     if (pctx->pextra_buff)
     {
-        free(pctx->pextra_buff);
+        free((void*)(pctx->pextra_buff));
     }
 
     size_t r = pctx->sz;
@@ -172,7 +172,7 @@ char* rubber_get(const rubber_ctx_t* pctx)
     if (!pctx)
         return NULL;
 
-    return (pctx->pextra_buff) ? pctx->pextra_buff : pctx->pbuff;
+    return (pctx->pextra_buff) ? (char*)(pctx->pextra_buff) : (char*)(pctx->pbuff);
 }
 
 char* rubber_get_pos(const rubber_ctx_t* pctx)
