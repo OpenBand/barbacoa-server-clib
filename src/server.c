@@ -259,8 +259,8 @@ void server_init_signals_should_register(int* psignos, int sz)
     SRV_C_ASSERT_TEXT(psignos, "Invalid signals set");
     SRV_C_ASSERT_TEXT(sz > 0 && sz < NSIG, "Invalid signals set");
 
-    memset(_should_register_signals, false, sizeof(_should_register_signals));
-    memset(_registred_signals, true, sizeof(_registred_signals));
+    MEMSET(_should_register_signals, false, sizeof(_should_register_signals));
+    MEMSET(_registred_signals, true, sizeof(_registred_signals));
 
     for (int ci = 0; ci < sz; ++ci)
     {

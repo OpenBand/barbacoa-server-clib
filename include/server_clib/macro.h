@@ -1,6 +1,8 @@
 #pragma once
 
+#define __STDC_WANT_LIB_EXT1__ 1
 #include <stdio.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -47,6 +49,14 @@
 
 #pragma GCC diagnostic ignored "-Wformat-truncation"
 
+#if (defined(__STDC_LIB_EXT1__) && __STDC_VERSION__ >= 201112L)
+#define SNPRINT_F snprintf_s
+#define MEMSET memset_s
+#else
+#define SNPRINT_F snprintf
+#define MEMSET memset
+#endif
+
 #ifndef NDEBUG
 
 #define SRV_C_FPRINTF_(...) \
@@ -67,29 +77,29 @@
 
 #endif
 
-#define SRV_C_TERMINATE_(func, call_mode, e_code, fmt_message, ...)                                \
-    if (!(func))                                                                                   \
-    {                                                                                              \
-        char szMSG_FMT[MAX_INPUT] = "";                                                            \
-        char szMSG[MAX_INPUT] = "";                                                                \
-        snprintf(szMSG_FMT, sizeof(szMSG_FMT), fmt_message, __VA_ARGS__);                          \
-        snprintf(szMSG, sizeof(szMSG), "%s (%d) -> %s: %s", __FILE__, __LINE__, #func, szMSG_FMT); \
-        if (call_mode && errno != 0)                                                               \
-        {                                                                                          \
-            perror(szMSG);                                                                         \
-        }                                                                                          \
-        else                                                                                       \
-        {                                                                                          \
-            SRV_C_FPRINTF_("%s\n", szMSG);                                                         \
-        }                                                                                          \
-        if (e_code >= 0)                                                                           \
-        {                                                                                          \
-            exit(e_code);                                                                          \
-        }                                                                                          \
-        else                                                                                       \
-        {                                                                                          \
-            abort();                                                                               \
-        }                                                                                          \
+#define SRV_C_TERMINATE_(func, call_mode, e_code, fmt_message, ...)                                 \
+    if (!(func))                                                                                    \
+    {                                                                                               \
+        char szMSG_FMT[MAX_INPUT] = "";                                                             \
+        char szMSG[MAX_INPUT] = "";                                                                 \
+        SNPRINT_F(szMSG_FMT, sizeof(szMSG_FMT), fmt_message, __VA_ARGS__);                          \
+        SNPRINT_F(szMSG, sizeof(szMSG), "%s (%d) -> %s: %s", __FILE__, __LINE__, #func, szMSG_FMT); \
+        if (call_mode && errno != 0)                                                                \
+        {                                                                                           \
+            perror(szMSG);                                                                          \
+        }                                                                                           \
+        else                                                                                        \
+        {                                                                                           \
+            SRV_C_FPRINTF_("%s\n", szMSG);                                                          \
+        }                                                                                           \
+        if (e_code >= 0)                                                                            \
+        {                                                                                           \
+            exit(e_code);                                                                           \
+        }                                                                                           \
+        else                                                                                        \
+        {                                                                                           \
+            abort();                                                                                \
+        }                                                                                           \
     }
 
 inline void _SRV_C_TRACE(const char* t_file, int t_line, const char* info)

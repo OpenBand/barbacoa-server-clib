@@ -3,6 +3,8 @@
 #include <server_clib/hex.h>
 #include <server_clib/macro.h>
 
+#include <cstring>
+
 namespace server_clib {
 BOOST_AUTO_TEST_SUITE(hex_tests)
 
@@ -22,7 +24,7 @@ BOOST_AUTO_TEST_CASE(positive_convertion_check)
     BOOST_REQUIRE_EQUAL(r, strlen(enc_buff));
     BOOST_REQUIRE_EQUAL(std::string(dec_buff), "12345abra");
 
-    memset(dec_buff, 0, sizeof(dec_buff));
+    std::memset(dec_buff, 0, sizeof(dec_buff));
 
     r = hex_stream_from_hex(enc_buff, strlen(enc_buff) - 3, (unsigned char*)dec_buff, sizeof(dec_buff));
 
@@ -46,7 +48,7 @@ BOOST_AUTO_TEST_CASE(sanitize_to_hex_convertion_check)
     BOOST_REQUIRE_EQUAL(
         hex_stream_to_hex((const unsigned char*)multy_data, sizeof(multy_data), buff, sizeof(multy_data) * 2), 10);
 
-    memset(buff, 0, sizeof(buff));
+    std::memset(buff, 0, sizeof(buff));
     BOOST_REQUIRE_EQUAL(
         hex_stream_to_hex((const unsigned char*)multy_data, sizeof(multy_data), buff, sizeof(multy_data) * 2 - 3), 8);
 
