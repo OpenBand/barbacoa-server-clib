@@ -20,7 +20,7 @@
 #if !defined(ALTER_STACK_DISABLED)
 static char ALTER_STACK_BUFF[ALTER_STACK_BUFF_SZ];
 #endif
-static app_sig_callback_ft _sig_callback = NULL;
+static srv_c_app_sig_callback_ft _sig_callback = NULL;
 static bool _should_register_signals[NSIG] = { false };
 static bool _registred_signals[NSIG] = { false };
 static volatile sig_atomic_t _fail_flag = false; // to prevent infinite loop in corrupted callback
@@ -28,9 +28,9 @@ static volatile sig_atomic_t _sig_initiated = false; // to protect support stati
 
 static volatile sig_atomic_t _fail_can_jump = 0;
 static sigjmp_buf _fail_jump_ctx;
-static app_fail_callback_ft _fail_callback = NULL;
+static srv_c_app_fail_callback_ft _fail_callback = NULL;
 
-static app_sig_callback_ft register_signal_impl(int signo, app_sig_callback_ft func)
+static srv_c_app_sig_callback_ft register_signal_impl(int signo, srv_c_app_sig_callback_ft func)
 {
     struct sigaction act, oact;
 
@@ -91,12 +91,12 @@ static bool is_signal_should_register(int signo)
     return signo > 0 && signo < NSIG && _should_register_signals[signo];
 }
 
-static bool register_signal(int signo, app_sig_callback_ft func)
+static bool register_signal(int signo, srv_c_app_sig_callback_ft func)
 {
     if (is_signal_registered(signo))
         return false;
 
-    app_sig_callback_ft ofunc;
+    srv_c_app_sig_callback_ft ofunc;
 
     if ((ofunc = register_signal_impl(signo, func)) == SIG_ERR)
     {
@@ -124,7 +124,7 @@ static bool is_final_signal(int signo)
     return result;
 }
 
-bool app_has_fail_signal(int signo)
+bool srv_c_is_fail_signal(int signo)
 {
     //'volatile' removes optimization magic -O3 (that unfortunately corrupt switch logic for GCC)
     volatile bool result = false;
@@ -165,7 +165,7 @@ static pid_t fork_impl()
 
 static void default_sig_callback(int signo)
 {
-    if (!app_has_fail_signal(signo))
+    if (!srv_c_is_fail_signal(signo))
     {
         // Causes normal program termination to occur without
         // completely cleaning the resources.
@@ -174,7 +174,7 @@ static void default_sig_callback(int signo)
     }
     else
     {
-        app_abort();
+        srv_c_app_abort();
     }
 }
 
@@ -182,13 +182,13 @@ static void wrapped_sig_callback(int signo)
 {
     if (_sig_initiated)
     {
-        if (app_has_fail_signal(signo))
+        if (srv_c_is_fail_signal(signo))
         {
             if (_fail_flag)
             {
                 //prevent repeated fail signal in fail callback
                 if (SIGABRT != signo)
-                    app_abort();
+                    srv_c_app_abort();
                 return;
             }
             else
@@ -208,13 +208,13 @@ static void wrapped_sig_callback(int signo)
             }
             else
             {
-                app_abort();
+                srv_c_app_abort();
             }
         }
     }
 }
 
-static void set_signals_callback(app_sig_callback_ft sig_callback,
+static void set_signals_callback(srv_c_app_sig_callback_ft sig_callback,
                                  bool fails_only,
                                  bool lock_io)
 {
@@ -225,7 +225,7 @@ static void set_signals_callback(app_sig_callback_ft sig_callback,
     {
         // for silent applications daemonized by demon mode or external orchestrator
         // OS emit SIGPIPE signal if application try to write to STDOUT, STRERR
-        lock_signal(SIGPIPE);
+        srv_c_app_lock_signal(SIGPIPE);
     }
 
     _sig_callback = sig_callback;
@@ -235,7 +235,7 @@ static void set_signals_callback(app_sig_callback_ft sig_callback,
         if (!is_signal_should_register(sig))
             continue;
 
-        if (!fails_only || app_has_fail_signal(sig))
+        if (!fails_only || srv_c_is_fail_signal(sig))
             register_signal(sig, wrapped_sig_callback);
     }
 }
@@ -247,12 +247,12 @@ static void lock_signals()
         if (!is_signal_should_register(sig))
             continue;
 
-        if (!app_has_fail_signal(sig))
+        if (!srv_c_is_fail_signal(sig))
             register_blocked_signal(sig);
     }
 }
 
-static void daemon_init_impl(app_exit_callback_ft exit_callback)
+static void daemon_init_impl(srv_c_app_exit_callback_ft exit_callback)
 {
     int i;
     pid_t pid;
@@ -287,7 +287,7 @@ static void daemon_init_impl(app_exit_callback_ft exit_callback)
     umask(0); /* clear our file mode creation mask */
 }
 
-static void fail_callback_init_impl(app_fail_callback_ft fail_callback)
+static void fail_callback_init_impl(srv_c_app_fail_callback_ft fail_callback)
 {
     if (fail_callback)
     {
@@ -302,13 +302,13 @@ static void fail_callback_init_impl(app_fail_callback_ft fail_callback)
         {
             _fail_callback();
 
-            app_abort();
+            srv_c_app_abort();
         }
     }
 }
 
-static void app_init_impl(app_sig_callback_ft sig_callback,
-                          app_fail_callback_ft fail_callback,
+static void app_init_impl(srv_c_app_sig_callback_ft sig_callback,
+                          srv_c_app_fail_callback_ft fail_callback,
                           bool lock_io)
 {
     _sig_initiated = false;
@@ -320,19 +320,19 @@ static void app_init_impl(app_sig_callback_ft sig_callback,
     _sig_initiated = true;
 }
 
-static void app_mt_init_impl(app_sig_callback_ft sig_callback,
-                             app_fail_callback_ft fail_callback,
+static void app_mt_init_impl(srv_c_app_sig_callback_ft sig_callback,
+                             srv_c_app_fail_callback_ft fail_callback,
                              bool lock_io)
 {
     _sig_initiated = false;
 
     //to determine exact thread for signal processing
-    //(using app_mt_wait_sig_callback) we should lock all
+    //(using srv_c_app_mt_wait_sig_callback) we should lock all
     //processing signals for every thread
     lock_signals();
 
     //register only fail signals here because
-    //others will use 'app_mt_wait_sig_callback' technique
+    //others will use 'srv_c_app_mt_wait_sig_callback' technique
     //for multithreaded sake and was locked before
     set_signals_callback(sig_callback, true, lock_io);
 
@@ -341,7 +341,7 @@ static void app_mt_init_impl(app_sig_callback_ft sig_callback,
     _sig_initiated = true;
 }
 
-size_t app_get_alter_stack_size(void)
+size_t srv_c_app_get_alter_stack_size(void)
 {
 #if !defined(ALTER_STACK_DISABLED)
     return ALTER_STACK_BUFF_SZ;
@@ -350,7 +350,7 @@ size_t app_get_alter_stack_size(void)
 #endif
 }
 
-void app_init_signals_should_register(int* psignos, int sz)
+void srv_c_app_init_signals_should_register(int* psignos, int sz)
 {
     SRV_C_ASSERT_TEXT(psignos, "Invalid signals set");
     SRV_C_ASSERT_TEXT(sz > 0 && sz < NSIG, "Invalid signals set");
@@ -368,26 +368,26 @@ void app_init_signals_should_register(int* psignos, int sz)
     }
 }
 
-void app_init_default_signals_should_register(void)
+void srv_c_app_init_default_signals_should_register(void)
 {
     int signals[] = { SIGTERM, SIGINT, SIGQUIT, SIGABRT, SIGSEGV, SIGFPE, SIGUSR1, SIGUSR2 };
 
-    app_init_signals_should_register(signals, sizeof(signals) / sizeof(int));
+    srv_c_app_init_signals_should_register(signals, sizeof(signals) / sizeof(int));
 }
 
-void SRV_PRIV_C_WRAPPABLE_FUNC(app_init_daemon)(app_exit_callback_ft exit_callback,
-                                                app_sig_callback_ft sig_callback,
-                                                app_fail_callback_ft fail_callback)
+void SRV_PRIV_C_WRAPPABLE_FUNC(srv_c_app_init_daemon)(srv_c_app_exit_callback_ft exit_callback,
+                                                      srv_c_app_sig_callback_ft sig_callback,
+                                                      srv_c_app_fail_callback_ft fail_callback)
 {
     daemon_init_impl(exit_callback);
 
     app_init_impl(sig_callback, fail_callback, true);
 }
 
-void SRV_PRIV_C_WRAPPABLE_FUNC(app_init)(app_exit_callback_ft exit_callback,
-                                         app_sig_callback_ft sig_callback,
-                                         app_fail_callback_ft fail_callback,
-                                         bool lock_io)
+void SRV_PRIV_C_WRAPPABLE_FUNC(srv_c_app_init)(srv_c_app_exit_callback_ft exit_callback,
+                                               srv_c_app_sig_callback_ft sig_callback,
+                                               srv_c_app_fail_callback_ft fail_callback,
+                                               bool lock_io)
 {
     if (exit_callback)
         atexit(exit_callback);
@@ -395,19 +395,19 @@ void SRV_PRIV_C_WRAPPABLE_FUNC(app_init)(app_exit_callback_ft exit_callback,
     app_init_impl(sig_callback, fail_callback, lock_io);
 }
 
-void SRV_PRIV_C_WRAPPABLE_FUNC(app_mt_init_daemon)(app_exit_callback_ft exit_callback,
-                                                   app_sig_callback_ft sig_callback,
-                                                   app_fail_callback_ft fail_callback)
+void SRV_PRIV_C_WRAPPABLE_FUNC(srv_c_app_mt_init_daemon)(srv_c_app_exit_callback_ft exit_callback,
+                                                         srv_c_app_sig_callback_ft sig_callback,
+                                                         srv_c_app_fail_callback_ft fail_callback)
 {
     daemon_init_impl(exit_callback);
 
     app_mt_init_impl(sig_callback, fail_callback, true);
 }
 
-void SRV_PRIV_C_WRAPPABLE_FUNC(app_mt_init)(app_exit_callback_ft exit_callback,
-                                            app_sig_callback_ft sig_callback,
-                                            app_fail_callback_ft fail_callback,
-                                            bool lock_io)
+void SRV_PRIV_C_WRAPPABLE_FUNC(srv_c_app_mt_init)(srv_c_app_exit_callback_ft exit_callback,
+                                                  srv_c_app_sig_callback_ft sig_callback,
+                                                  srv_c_app_fail_callback_ft fail_callback,
+                                                  bool lock_io)
 {
     if (exit_callback)
         atexit(exit_callback);
@@ -415,7 +415,7 @@ void SRV_PRIV_C_WRAPPABLE_FUNC(app_mt_init)(app_exit_callback_ft exit_callback,
     app_mt_init_impl(sig_callback, fail_callback, lock_io);
 }
 
-void app_mt_wait_sig_callback(app_sig_callback_ft sig_callback)
+void srv_c_app_mt_wait_sig_callback(srv_c_app_sig_callback_ft sig_callback)
 {
     sigset_t wait_set;
 
@@ -426,7 +426,7 @@ void app_mt_wait_sig_callback(app_sig_callback_ft sig_callback)
         if (!is_signal_should_register(sig))
             continue;
 
-        if (!app_has_fail_signal(sig))
+        if (!srv_c_is_fail_signal(sig))
             sigaddset(&wait_set, sig);
     }
 
@@ -440,7 +440,7 @@ void app_mt_wait_sig_callback(app_sig_callback_ft sig_callback)
     sig_callback(inbound_sig);
 }
 
-void app_abort()
+void srv_c_app_abort()
 {
     if (is_signal_registered(SIGABRT))
     {
@@ -451,13 +451,13 @@ void app_abort()
     abort();
 }
 
-void lock_signal(int signo)
+void srv_c_app_lock_signal(int signo)
 {
     if (!is_signal_registered(signo))
         lock_signal_impl(signo);
 }
 
-void unlock_signal(int signo)
+void srv_c_app_unlock_signal(int signo)
 {
     if (!is_signal_registered(signo))
     {

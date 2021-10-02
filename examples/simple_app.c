@@ -34,7 +34,7 @@ static void simple_payload(void)
     {
         LOG("Left %d", tick);
         // wait 1 second
-        wpause(1000);
+        srv_c_wpause(1000);
     }
     LOG("Stop application");
 }
@@ -43,8 +43,8 @@ int main(void)
 {
     int signals[] = { SIGINT, SIGTERM, SIGUSR1, SIGUSR2, SIGFPE };
 
-    app_init_signals_should_register(signals, sizeof(signals) / sizeof(int));
-    app_init(exit_handler, signal_handler, NULL, FALSE);
+    srv_c_app_init_signals_should_register(signals, sizeof(signals) / sizeof(int));
+    srv_c_app_init(exit_handler, signal_handler, NULL, FALSE);
 
     simple_payload();
 

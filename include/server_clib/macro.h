@@ -167,21 +167,6 @@ inline void _SRV_C_TRACE(const char* t_file, int t_line, const char* info)
     })
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Debug
-
-#ifndef NDEBUG
-#define SRV_C_TRACE_FMT(...)      \
-    fprintf(stderr, __VA_ARGS__); \
-    fprintf(stderr, "\n")
-#define SRV_C_TRACE_FMT_FLUSH(...) \
-    SRV_C_TRACE_FMT(__VA_ARGS__);  \
-    fflush(stderr)
-#else
-#define SRV_C_TRACE_FMT(...)
-#define SRV_C_TRACE_FMT_FLUSH(...)
-#endif
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // tests
 //  If NDEBUG is defined as a macro name at the point in the source code where <cassert> is included, then assert does
 //  nothing.

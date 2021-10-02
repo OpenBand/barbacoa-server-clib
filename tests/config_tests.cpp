@@ -49,11 +49,11 @@ BOOST_AUTO_TEST_CASE(config_json_string_string_check)
                          )";
     auto config_path = create_config(config);
 
-    auto config_callback = [](const char* key, const config_ctx_t* pctx) -> BOOL {
+    auto config_callback = [](const char* key, const srv_c_config_ctx_t* pctx) -> BOOL {
         std::string expected_key = "op1";
         BOOST_REQUIRE_EQUAL(expected_key, std::string{ key });
         char buff[MAX_INPUT];
-        if (!config_get_string(pctx, buff, MAX_INPUT))
+        if (!srv_c_config_get_string(pctx, buff, MAX_INPUT))
             return false;
 
         std::string expected_value = "option";
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(config_json_string_string_check)
         return true;
     };
 
-    BOOST_REQUIRE(config_load(config_path.c_str(), config_callback));
+    BOOST_REQUIRE(srv_c_config_load(config_path.c_str(), config_callback));
 }
 
 BOOST_AUTO_TEST_CASE(config_jsmn_string_string_check)
@@ -72,11 +72,11 @@ BOOST_AUTO_TEST_CASE(config_jsmn_string_string_check)
                          )";
     auto config_path = create_config(config);
 
-    auto config_callback = [](const char* key, const config_ctx_t* pctx) -> BOOL {
+    auto config_callback = [](const char* key, const srv_c_config_ctx_t* pctx) -> BOOL {
         std::string expected_key = "op1";
         BOOST_REQUIRE_EQUAL(expected_key, std::string{ key });
         char buff[MAX_INPUT];
-        if (!config_get_string(pctx, buff, MAX_INPUT))
+        if (!srv_c_config_get_string(pctx, buff, MAX_INPUT))
             return false;
 
         std::string expected_value = "option";
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(config_jsmn_string_string_check)
         return true;
     };
 
-    BOOST_REQUIRE(config_load(config_path.c_str(), config_callback));
+    BOOST_REQUIRE(srv_c_config_load(config_path.c_str(), config_callback));
 }
 
 BOOST_AUTO_TEST_CASE(config_jsmn2_string_string_check)
@@ -95,11 +95,11 @@ BOOST_AUTO_TEST_CASE(config_jsmn2_string_string_check)
                          )";
     auto config_path = create_config(config);
 
-    auto config_callback = [](const char* key, const config_ctx_t* pctx) -> BOOL {
+    auto config_callback = [](const char* key, const srv_c_config_ctx_t* pctx) -> BOOL {
         std::string expected_key = "op1";
         BOOST_REQUIRE_EQUAL(expected_key, std::string{ key });
         char buff[MAX_INPUT];
-        if (!config_get_string(pctx, buff, MAX_INPUT))
+        if (!srv_c_config_get_string(pctx, buff, MAX_INPUT))
             return false;
 
         std::string expected_value = "option";
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(config_jsmn2_string_string_check)
         return true;
     };
 
-    BOOST_REQUIRE(config_load(config_path.c_str(), config_callback));
+    BOOST_REQUIRE(srv_c_config_load(config_path.c_str(), config_callback));
 }
 
 BOOST_AUTO_TEST_CASE(config_ini_string_string_check)
@@ -122,11 +122,11 @@ BOOST_AUTO_TEST_CASE(config_ini_string_string_check)
                          )";
     auto config_path = create_config(config);
 
-    auto config_callback = [](const char* key, const config_ctx_t* pctx) -> BOOL {
+    auto config_callback = [](const char* key, const srv_c_config_ctx_t* pctx) -> BOOL {
         std::string expected_key = "op1";
         BOOST_REQUIRE_EQUAL(expected_key, std::string{ key });
         char buff[MAX_INPUT];
-        if (!config_get_string(pctx, buff, MAX_INPUT))
+        if (!srv_c_config_get_string(pctx, buff, MAX_INPUT))
             return false;
 
         std::string expected_value = "option";
@@ -135,7 +135,7 @@ BOOST_AUTO_TEST_CASE(config_ini_string_string_check)
         return true;
     };
 
-    BOOST_REQUIRE(config_load(config_path.c_str(), config_callback));
+    BOOST_REQUIRE(srv_c_config_load(config_path.c_str(), config_callback));
 }
 
 BOOST_AUTO_TEST_CASE(config_mixed_string_string_check)
@@ -148,11 +148,11 @@ BOOST_AUTO_TEST_CASE(config_mixed_string_string_check)
                          )";
     auto config_path = create_config(config);
 
-    auto config_callback = [](const char* key, const config_ctx_t* pctx) -> BOOL {
+    auto config_callback = [](const char* key, const srv_c_config_ctx_t* pctx) -> BOOL {
         if (!strncmp(key, "op1", MAX_INPUT))
         {
             char buff[MAX_INPUT];
-            if (!config_get_string(pctx, buff, MAX_INPUT))
+            if (!srv_c_config_get_string(pctx, buff, MAX_INPUT))
                 return false;
 
             BOOST_REQUIRE_EQUAL(std::string{ "option1" }, std::string{ buff });
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE(config_mixed_string_string_check)
         else if (!strncmp(key, "op2", MAX_INPUT))
         {
             char buff[MAX_INPUT];
-            if (!config_get_string(pctx, buff, MAX_INPUT))
+            if (!srv_c_config_get_string(pctx, buff, MAX_INPUT))
                 return false;
 
             BOOST_REQUIRE_EQUAL(std::string{ "option2" }, std::string{ buff });
@@ -168,7 +168,7 @@ BOOST_AUTO_TEST_CASE(config_mixed_string_string_check)
         else if (!strncmp(key, "op3", MAX_INPUT))
         {
             char buff[MAX_INPUT];
-            if (!config_get_string(pctx, buff, MAX_INPUT))
+            if (!srv_c_config_get_string(pctx, buff, MAX_INPUT))
                 return false;
 
             BOOST_REQUIRE_EQUAL(std::string{ "ini-option" }, std::string{ buff });
@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(config_mixed_string_string_check)
         return true;
     };
 
-    BOOST_REQUIRE(config_load(config_path.c_str(), config_callback));
+    BOOST_REQUIRE(srv_c_config_load(config_path.c_str(), config_callback));
 }
 
 BOOST_AUTO_TEST_CASE(config_mixed_simple_types_check)
@@ -197,11 +197,11 @@ BOOST_AUTO_TEST_CASE(config_mixed_simple_types_check)
                          )";
     auto config_path = create_config(config);
 
-    auto config_callback = [](const char* key, const config_ctx_t* pctx) -> BOOL {
+    auto config_callback = [](const char* key, const srv_c_config_ctx_t* pctx) -> BOOL {
         if (!strncmp(key, "op1", MAX_INPUT))
         {
             char buff[MAX_INPUT];
-            if (!config_get_string(pctx, buff, MAX_INPUT))
+            if (!srv_c_config_get_string(pctx, buff, MAX_INPUT))
                 return false;
 
             BOOST_REQUIRE_EQUAL(std::string{ "option1" }, std::string{ buff });
@@ -209,7 +209,7 @@ BOOST_AUTO_TEST_CASE(config_mixed_simple_types_check)
         else if (!strncmp(key, "op2", MAX_INPUT))
         {
             int val = -1;
-            if (!config_get_int(pctx, &val))
+            if (!srv_c_config_get_int(pctx, &val))
                 return false;
 
             BOOST_REQUIRE_EQUAL(val, 123);
@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE(config_mixed_simple_types_check)
         else if (!strncmp(key, "op3", MAX_INPUT))
         {
             BOOL val = false;
-            if (!config_get_bool(pctx, &val))
+            if (!srv_c_config_get_bool(pctx, &val))
                 return false;
 
             BOOST_REQUIRE_EQUAL(val, true);
@@ -225,7 +225,7 @@ BOOST_AUTO_TEST_CASE(config_mixed_simple_types_check)
         else if (!strncmp(key, "op4", MAX_INPUT))
         {
             int val = 0;
-            if (!config_get_int(pctx, &val))
+            if (!srv_c_config_get_int(pctx, &val))
                 return false;
 
             BOOST_REQUIRE_EQUAL(val, -321);
@@ -233,7 +233,7 @@ BOOST_AUTO_TEST_CASE(config_mixed_simple_types_check)
         else if (!strncmp(key, "op5", MAX_INPUT))
         {
             BOOL val = true;
-            if (!config_get_bool(pctx, &val))
+            if (!srv_c_config_get_bool(pctx, &val))
                 return false;
 
             BOOST_REQUIRE_EQUAL(val, false);
@@ -241,7 +241,7 @@ BOOST_AUTO_TEST_CASE(config_mixed_simple_types_check)
         else if (!strncmp(key, "op6", MAX_INPUT))
         {
             BOOL val = true;
-            if (!config_get_bool(pctx, &val))
+            if (!srv_c_config_get_bool(pctx, &val))
                 return false;
 
             BOOST_REQUIRE_EQUAL(val, false);
@@ -249,7 +249,7 @@ BOOST_AUTO_TEST_CASE(config_mixed_simple_types_check)
         else if (!strncmp(key, "op7", MAX_INPUT))
         {
             BOOL val = false;
-            if (!config_get_bool(pctx, &val))
+            if (!srv_c_config_get_bool(pctx, &val))
                 return false;
 
             BOOST_REQUIRE_EQUAL(val, true);
@@ -262,7 +262,7 @@ BOOST_AUTO_TEST_CASE(config_mixed_simple_types_check)
         return true;
     };
 
-    BOOST_REQUIRE(config_load(config_path.c_str(), config_callback));
+    BOOST_REQUIRE(srv_c_config_load(config_path.c_str(), config_callback));
 }
 
 BOOST_AUTO_TEST_CASE(config_array_of_int_check)
@@ -272,12 +272,12 @@ BOOST_AUTO_TEST_CASE(config_array_of_int_check)
                          )";
     auto config_path = create_config(config);
 
-    auto config_callback = [](const char* key, const config_ctx_t* pctx) -> BOOL {
+    auto config_callback = [](const char* key, const srv_c_config_ctx_t* pctx) -> BOOL {
         std::string expected_key = "op1";
         BOOST_REQUIRE_EQUAL(expected_key, std::string{ key });
         int* parray = nullptr;
         size_t sz = 0;
-        if (!config_get_int_array(pctx, &parray, &sz, 10))
+        if (!srv_c_config_get_int_array(pctx, &parray, &sz, 10))
             return false;
 
         BOOST_REQUIRE_EQUAL(sz, 5u);
@@ -290,7 +290,7 @@ BOOST_AUTO_TEST_CASE(config_array_of_int_check)
         return true;
     };
 
-    BOOST_REQUIRE(config_load(config_path.c_str(), config_callback));
+    BOOST_REQUIRE(srv_c_config_load(config_path.c_str(), config_callback));
 }
 
 BOOST_AUTO_TEST_CASE(config_array_of_bool_check)
@@ -300,12 +300,12 @@ BOOST_AUTO_TEST_CASE(config_array_of_bool_check)
                          )";
     auto config_path = create_config(config);
 
-    auto config_callback = [](const char* key, const config_ctx_t* pctx) -> BOOL {
+    auto config_callback = [](const char* key, const srv_c_config_ctx_t* pctx) -> BOOL {
         std::string expected_key = "op1";
         BOOST_REQUIRE_EQUAL(expected_key, std::string{ key });
         int* parray = nullptr;
         size_t sz = 0;
-        if (!config_get_bool_array(pctx, &parray, &sz, 10))
+        if (!srv_c_config_get_bool_array(pctx, &parray, &sz, 10))
             return false;
 
         BOOST_REQUIRE_EQUAL(sz, 6u);
@@ -318,7 +318,7 @@ BOOST_AUTO_TEST_CASE(config_array_of_bool_check)
         return true;
     };
 
-    BOOST_REQUIRE(config_load(config_path.c_str(), config_callback));
+    BOOST_REQUIRE(srv_c_config_load(config_path.c_str(), config_callback));
 }
 
 BOOST_AUTO_TEST_CASE(config_array_of_string_check)
@@ -328,13 +328,13 @@ BOOST_AUTO_TEST_CASE(config_array_of_string_check)
                          )";
     auto config_path = create_config(config);
 
-    auto config_callback = [](const char* key, const config_ctx_t* pctx) -> BOOL {
+    auto config_callback = [](const char* key, const srv_c_config_ctx_t* pctx) -> BOOL {
         std::string expected_key = "op1";
         BOOST_REQUIRE_EQUAL(expected_key, std::string{ key });
         char* parray = nullptr;
         size_t sz = 0;
         const size_t item_sz = 30;
-        if (!config_get_string_array(pctx, &parray, &sz, item_sz, 10))
+        if (!srv_c_config_get_string_array(pctx, &parray, &sz, item_sz, 10))
             return false;
 
         BOOST_REQUIRE_EQUAL(sz, 6u);
@@ -354,7 +354,7 @@ BOOST_AUTO_TEST_CASE(config_array_of_string_check)
         return true;
     };
 
-    BOOST_REQUIRE(config_load(config_path.c_str(), config_callback));
+    BOOST_REQUIRE(srv_c_config_load(config_path.c_str(), config_callback));
 }
 
 BOOST_AUTO_TEST_CASE(config_signle_line_config_check)
@@ -363,11 +363,11 @@ BOOST_AUTO_TEST_CASE(config_signle_line_config_check)
         = R"({ "op1": "option1", "op2": 123, "op3": true, "op4": [1, 2, 3, 4, 5, 6, 7], "op5": ["v1", "value2"] })";
     auto config_path = create_config(config);
 
-    auto config_callback = [](const char* key, const config_ctx_t* pctx) -> BOOL {
+    auto config_callback = [](const char* key, const srv_c_config_ctx_t* pctx) -> BOOL {
         if (!strncmp(key, "op1", MAX_INPUT))
         {
             char buff[MAX_INPUT];
-            if (!config_get_string(pctx, buff, MAX_INPUT))
+            if (!srv_c_config_get_string(pctx, buff, MAX_INPUT))
                 return false;
 
             BOOST_REQUIRE_EQUAL(std::string{ "option1" }, std::string{ buff });
@@ -375,7 +375,7 @@ BOOST_AUTO_TEST_CASE(config_signle_line_config_check)
         else if (!strncmp(key, "op2", MAX_INPUT))
         {
             int val = -1;
-            if (!config_get_int(pctx, &val))
+            if (!srv_c_config_get_int(pctx, &val))
                 return false;
 
             BOOST_REQUIRE_EQUAL(val, 123);
@@ -383,7 +383,7 @@ BOOST_AUTO_TEST_CASE(config_signle_line_config_check)
         else if (!strncmp(key, "op3", MAX_INPUT))
         {
             BOOL val = false;
-            if (!config_get_bool(pctx, &val))
+            if (!srv_c_config_get_bool(pctx, &val))
                 return false;
 
             BOOST_REQUIRE_EQUAL(val, true);
@@ -392,7 +392,7 @@ BOOST_AUTO_TEST_CASE(config_signle_line_config_check)
         {
             int* parray = nullptr;
             size_t sz = 0;
-            if (!config_get_int_array(pctx, &parray, &sz, 5)) // test for max_sz limitation
+            if (!srv_c_config_get_int_array(pctx, &parray, &sz, 5)) // test for max_sz limitation
                 return false;
 
             BOOST_REQUIRE_EQUAL(sz, 5u);
@@ -407,7 +407,7 @@ BOOST_AUTO_TEST_CASE(config_signle_line_config_check)
             char* parray = nullptr;
             size_t sz = 0;
             const size_t item_sz = 30;
-            if (!config_get_string_array(pctx, &parray, &sz, item_sz, 10))
+            if (!srv_c_config_get_string_array(pctx, &parray, &sz, item_sz, 10))
                 return false;
 
             BOOST_REQUIRE_EQUAL(sz, 2u);
@@ -425,7 +425,7 @@ BOOST_AUTO_TEST_CASE(config_signle_line_config_check)
         return true;
     };
 
-    BOOST_REQUIRE(config_load(config_path.c_str(), config_callback));
+    BOOST_REQUIRE(srv_c_config_load(config_path.c_str(), config_callback));
 }
 
 BOOST_AUTO_TEST_CASE(config_time_config_check)
@@ -435,14 +435,14 @@ BOOST_AUTO_TEST_CASE(config_time_config_check)
                          )";
     auto config_path = create_config(config);
 
-    auto config_callback = [](const char* key, const config_ctx_t* pctx) -> BOOL {
+    auto config_callback = [](const char* key, const srv_c_config_ctx_t* pctx) -> BOOL {
         std::string expected_key = "op1";
         BOOST_REQUIRE_EQUAL(expected_key, std::string{ key });
 
         static const char* TIME_FORMAT = "%Y-%m-%dT%H:%M:%S";
 
         std::time_t unix_local_t;
-        if (!config_get_local_time(pctx, TIME_FORMAT, &unix_local_t))
+        if (!srv_c_config_get_local_time(pctx, TIME_FORMAT, &unix_local_t))
             return false;
 
         std::stringstream ss_local;
@@ -452,7 +452,7 @@ BOOST_AUTO_TEST_CASE(config_time_config_check)
         BOOST_REQUIRE_EQUAL(std::string{ "2018-12-06T10:28:20" }, ss_local.str());
 
         std::time_t unix_utc_t;
-        if (!config_get_utc_time(pctx, TIME_FORMAT, &unix_utc_t))
+        if (!srv_c_config_get_utc_time(pctx, TIME_FORMAT, &unix_utc_t))
             return false;
 
         std::stringstream ss_utc;
@@ -464,7 +464,7 @@ BOOST_AUTO_TEST_CASE(config_time_config_check)
         return true;
     };
 
-    BOOST_REQUIRE(config_load(config_path.c_str(), config_callback));
+    BOOST_REQUIRE(srv_c_config_load(config_path.c_str(), config_callback));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

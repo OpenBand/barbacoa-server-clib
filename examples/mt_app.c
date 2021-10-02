@@ -40,7 +40,7 @@ static void* sig_thread(__attribute__((unused)) void* arg)
                (unsigned long)syscall(SYS_gettid));
     for (;;)
     {
-        app_mt_wait_sig_callback(signal_handler);
+        srv_c_app_mt_wait_sig_callback(signal_handler);
         LOG_THREAD(mtx, "Signal handling thread %lu is waiting for next signal",
                    (unsigned long)syscall(SYS_gettid));
     }
@@ -54,7 +54,7 @@ static void* job_thread(__attribute__((unused)) void* arg)
     {
         LOG_THREAD(mtx, "Job %lu left %d", (unsigned long)syscall(SYS_gettid), tick);
         // wait 1 second
-        wpause(1000);
+        srv_c_wpause(1000);
     }
     LOG_THREAD(mtx, "Job %lu stops application", (unsigned long)syscall(SYS_gettid));
     exit(exit_code_ok);
@@ -66,14 +66,14 @@ int main(void)
 
     int signals[] = { SIGINT, SIGTERM, SIGUSR1, SIGUSR2, SIGFPE };
 
-    app_init_signals_should_register(signals, sizeof(signals) / sizeof(int));
+    srv_c_app_init_signals_should_register(signals, sizeof(signals) / sizeof(int));
 
-    app_mt_init(exit_handler, signal_handler, NULL, TRUE);
+    srv_c_app_mt_init(exit_handler, signal_handler, NULL, TRUE);
 
     SRV_C_CALL(pthread_create(&thread0, NULL, &sig_thread, NULL) == 0);
     SRV_C_CALL(pthread_create(&thread1, NULL, &job_thread, NULL) == 0);
     SRV_C_CALL(pthread_create(&thread2, NULL, &job_thread, NULL) == 0);
-    wpause(500);
+    srv_c_wpause(500);
     SRV_C_CALL(pthread_create(&thread3, NULL, &job_thread, NULL) == 0);
 
     SRV_C_CALL(pthread_join(thread0, NULL) == 0);

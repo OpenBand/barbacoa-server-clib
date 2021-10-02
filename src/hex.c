@@ -1,6 +1,6 @@
 #include <server_clib/hex.h>
 
-long hex_stream_to_hex(const unsigned char* p_input, const size_t input_sz, char* buff, const size_t buff_sz)
+long srv_c_hex_stream_to_hex(const unsigned char* p_input, const size_t input_sz, char* buff, const size_t buff_sz)
 {
     if (!p_input || !input_sz || !buff || !buff_sz)
         return -1;
@@ -35,7 +35,7 @@ static unsigned char ch_from_hex(const char c)
     return 0;
 }
 
-long hex_stream_from_hex(const char* buff, const size_t buff_sz, unsigned char* p_output, const size_t output_sz)
+long srv_c_hex_stream_from_hex(const char* buff, const size_t buff_sz, unsigned char* p_output, const size_t output_sz)
 {
     if (!p_output || !buff_sz || !buff || !output_sz)
         return -1;

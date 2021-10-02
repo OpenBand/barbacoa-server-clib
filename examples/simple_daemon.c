@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <server_clib/app.h>
 #include <server_clib/pause.h>
@@ -75,13 +76,13 @@ static void simple_payload(void)
 {
     create_activity_file();
     // wait 60 seconds
-    wpause(60 * 1000);
+    srv_c_wpause(60 * 1000);
 }
 
 int main(void)
 {
-    app_init_default_signals_should_register();
-    app_init_daemon(exit_handler, signal_handler, NULL);
+    srv_c_app_init_default_signals_should_register();
+    srv_c_app_init_daemon(exit_handler, signal_handler, NULL);
 
     simple_payload();
 

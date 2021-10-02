@@ -64,7 +64,7 @@ static BOOL zip_pack(const unsigned char* p_input,
     return p_output != NULL;
 }
 
-BOOL zip_pack_best_speed(const unsigned char* p_input,
+BOOL srv_c_zip_pack_best_speed(const unsigned char* p_input,
                          const size_t input_sz,
                          unsigned char** p_output,
                          size_t* output_sz,
@@ -73,7 +73,7 @@ BOOL zip_pack_best_speed(const unsigned char* p_input,
     return zip_pack(p_input, input_sz, p_output, output_sz, Z_BEST_SPEED, allocate_buffer);
 }
 
-BOOL zip_pack_best_size(const unsigned char* p_input,
+BOOL srv_c_zip_pack_best_size(const unsigned char* p_input,
                         const size_t input_sz,
                         unsigned char** p_output,
                         size_t* output_sz,
@@ -82,7 +82,7 @@ BOOL zip_pack_best_size(const unsigned char* p_input,
     return zip_pack(p_input, input_sz, p_output, output_sz, Z_BEST_COMPRESSION, allocate_buffer);
 }
 
-BOOL zip_unpack(const unsigned char* p_input,
+BOOL srv_c_zip_unpack(const unsigned char* p_input,
                 const size_t input_sz,
                 unsigned char** pp_output,
                 size_t* buff_sz,
