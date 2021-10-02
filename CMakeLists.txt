@@ -4,7 +4,7 @@ cmake_minimum_required( VERSION 2.8.12 )
 if (UNIX)
 
     set(SERVER_CLIB_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/server.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/app.c"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/priv_macro.h"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/pause.c"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/rubber.c"
