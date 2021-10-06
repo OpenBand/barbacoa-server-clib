@@ -16,6 +16,7 @@
 
 #define MAXFD 64
 #define ALTER_STACK_BUFF_SZ 4 * SIGSTKSZ
+#define EXIT_FAILURE_SIG_BASE_ 128
 
 #if !defined(ALTER_STACK_DISABLED)
 static char ALTER_STACK_BUFF[ALTER_STACK_BUFF_SZ];
@@ -29,6 +30,7 @@ static volatile sig_atomic_t _sig_initiated = false; // to protect support stati
 static volatile sig_atomic_t _fail_can_jump = 0;
 static sigjmp_buf _fail_jump_ctx;
 static srv_c_app_fail_callback_ft _fail_callback = NULL;
+static volatile sig_atomic_t _fail_core_creation_lock = 0;
 
 static srv_c_app_sig_callback_ft register_signal_impl(int signo, srv_c_app_sig_callback_ft func)
 {
@@ -135,6 +137,8 @@ bool srv_c_is_fail_signal(int signo)
     case SIGILL:
     case SIGFPE:
     case SIGABRT:
+    case SIGXCPU:
+    case SIGXFSZ:
         result = true;
         break;
     default:;
@@ -204,12 +208,17 @@ static void wrapped_sig_callback(int signo)
         {
             if (_fail_can_jump)
             {
-                siglongjmp(_fail_jump_ctx, 1);
+                pid_t pid = fork();
+                if (pid > 0)
+                {
+                    _fail_core_creation_lock = 1;
+
+                    //jump only in parent process
+                    siglongjmp(_fail_jump_ctx, 1);
+                } //else abort for child or fork error
             }
-            else
-            {
-                srv_c_app_abort();
-            }
+
+            srv_c_app_abort();
         }
     }
 }
@@ -370,7 +379,16 @@ void srv_c_app_init_signals_should_register(int* psignos, int sz)
 
 void srv_c_app_init_default_signals_should_register(void)
 {
-    int signals[] = { SIGTERM, SIGINT, SIGQUIT, SIGABRT, SIGSEGV, SIGFPE, SIGUSR1, SIGUSR2 };
+    int signals[] = { SIGTERM,
+                      SIGINT,
+                      SIGQUIT,
+                      SIGABRT,
+                      SIGSEGV,
+                      SIGFPE,
+                      SIGXCPU,
+                      SIGXFSZ,
+                      SIGUSR1,
+                      SIGUSR2 };
 
     srv_c_app_init_signals_should_register(signals, sizeof(signals) / sizeof(int));
 }
@@ -442,13 +460,20 @@ void srv_c_app_mt_wait_sig_callback(srv_c_app_sig_callback_ft sig_callback)
 
 void srv_c_app_abort()
 {
-    if (is_signal_registered(SIGABRT))
+    if (!_fail_core_creation_lock)
     {
-        //only for to not receive SIGABRT
-        //in our callback
-        signal(SIGABRT, SIG_DFL);
+        if (is_signal_registered(SIGABRT))
+        {
+            //only for to not receive SIGABRT
+            //in our callback
+            signal(SIGABRT, SIG_DFL);
+        }
+        abort();
     }
-    abort();
+    else
+    {
+        _exit(EXIT_FAILURE_SIG_BASE_ + SIGABRT);
+    }
 }
 
 void srv_c_app_lock_signal(int signo)
