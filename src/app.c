@@ -217,7 +217,7 @@ static void wrapped_sig_callback(int signo)
         {
             if (_fail_can_jump > 0)
             {
-                // we should fork to create correct coredump (because jump is here)
+                // we should fork to create correct corefile (because jump is here)
                 pid_t pid = fork_impl(true);
                 if (pid > 0)
                     wait(NULL); //don't complete parent before new child will be aborted
