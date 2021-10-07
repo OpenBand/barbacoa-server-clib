@@ -44,7 +44,7 @@ int main(void)
     int signals[] = { SIGINT, SIGTERM, SIGUSR1, SIGUSR2, SIGFPE };
 
     srv_c_app_init_signals_should_register(signals, sizeof(signals) / sizeof(int));
-    srv_c_app_init(exit_handler, signal_handler, NULL, FALSE);
+    srv_c_app_init(exit_handler, signal_handler, NULL, TRUE, FALSE);
 
     simple_payload();
 

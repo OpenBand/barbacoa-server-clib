@@ -7,6 +7,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 #include <setjmp.h>
 
@@ -31,6 +32,7 @@ static volatile sig_atomic_t _fail_can_jump = 0;
 static sigjmp_buf _fail_jump_ctx;
 static srv_c_app_fail_callback_ft _fail_callback = NULL;
 static volatile sig_atomic_t _fail_core_creation_lock = 0;
+static volatile sig_atomic_t _abort_signo = 0;
 
 static srv_c_app_sig_callback_ft register_signal_impl(int signo, srv_c_app_sig_callback_ft func)
 {
@@ -160,10 +162,17 @@ static bool register_blocked_signal(int signo)
     return true;
 }
 
-static pid_t fork_impl()
+static pid_t fork_impl(bool abort_for_err)
 {
     pid_t pid = fork();
-    SRV_C_ASSERT_TEXT(-1 != pid, "Can't fork");
+    if (abort_for_err && -1 == pid)
+    {
+        abort();
+    }
+    else
+    {
+        SRV_C_ASSERT_TEXT(-1 != pid, "Can't fork");
+    }
     return (pid);
 }
 
@@ -178,7 +187,7 @@ static void default_sig_callback(int signo)
     }
     else
     {
-        srv_c_app_abort();
+        srv_c_app_abort(signo);
     }
 }
 
@@ -192,7 +201,7 @@ static void wrapped_sig_callback(int signo)
             {
                 //prevent repeated fail signal in fail callback
                 if (SIGABRT != signo)
-                    srv_c_app_abort();
+                    srv_c_app_abort(signo);
                 return;
             }
             else
@@ -206,19 +215,38 @@ static void wrapped_sig_callback(int signo)
 
         if (_fail_flag)
         {
-            if (_fail_can_jump)
+            if (_fail_can_jump > 0)
             {
-                pid_t pid = fork();
+                // we should fork to create correct coredump (because jump is here)
+                pid_t pid = fork_impl(true);
                 if (pid > 0)
+                    wait(NULL); //don't complete parent before new child will be aborted
+
+                if ((_fail_can_jump == 1 && pid > 0) || (_fail_can_jump == 2 && !pid))
                 {
+                    // (1) for pid > 0
+                    //---------------------------------------------
+                    // Jump to safe place for final job in parent
+                    // process. Child will abort and dump memory
+                    // with restrictions (without other thread data)
+
+                    // (2) for pid == 0
+                    //-------------------------------------------
+                    // We have lost all surrounded threads here
+                    // and thread synchronization data are not available
+                    // Jump to safe place for final job.
+                    // Parent will abort and dump all memory with threads
+                    // data.
+
                     _fail_core_creation_lock = 1;
+                    _abort_signo = signo;
 
                     //jump only in parent process
                     siglongjmp(_fail_jump_ctx, 1);
                 } //else abort for child or fork error
             }
 
-            srv_c_app_abort();
+            srv_c_app_abort(signo);
         }
     }
 }
@@ -267,13 +295,13 @@ static void daemon_init_impl(srv_c_app_exit_callback_ft exit_callback)
     pid_t pid;
 
     /* magic to avoid parent links */
-    if ((pid = fork_impl()) != 0)
+    if ((pid = fork_impl(false)) != 0)
         exit(0); /* parent terminates */
 
     setsid(); /* become session leader */
 
     register_signal(SIGHUP, SIG_IGN);
-    if ((pid = fork_impl()) != 0)
+    if ((pid = fork_impl(false)) != 0)
         exit(0); /* 1st child terminates */
 
     /* hook for exit */
@@ -296,41 +324,48 @@ static void daemon_init_impl(srv_c_app_exit_callback_ft exit_callback)
     umask(0); /* clear our file mode creation mask */
 }
 
-static void fail_callback_init_impl(srv_c_app_fail_callback_ft fail_callback)
+static void fail_callback_init_impl(srv_c_app_fail_callback_ft fail_callback,
+                                    bool corefile_fail_thread_only)
 {
-    if (fail_callback)
+    if (fail_callback || corefile_fail_thread_only)
     {
         _fail_callback = fail_callback;
 
         //set jump point if special callback was set
         if (0 == sigsetjmp(_fail_jump_ctx, 0))
         {
-            _fail_can_jump = 1;
+            if (corefile_fail_thread_only)
+                _fail_can_jump = 1;
+            else
+                _fail_can_jump = 2;
         }
         else
         {
-            _fail_callback();
+            if (_fail_callback)
+                _fail_callback();
 
-            srv_c_app_abort();
+            srv_c_app_abort(_abort_signo);
         }
     }
 }
 
 static void app_init_impl(srv_c_app_sig_callback_ft sig_callback,
                           srv_c_app_fail_callback_ft fail_callback,
+                          bool corefile_fail_thread_only,
                           bool lock_io)
 {
     _sig_initiated = false;
 
     set_signals_callback(sig_callback, false, lock_io);
 
-    fail_callback_init_impl(fail_callback);
+    fail_callback_init_impl(fail_callback, corefile_fail_thread_only);
 
     _sig_initiated = true;
 }
 
 static void app_mt_init_impl(srv_c_app_sig_callback_ft sig_callback,
                              srv_c_app_fail_callback_ft fail_callback,
+                             bool corefile_fail_thread_only,
                              bool lock_io)
 {
     _sig_initiated = false;
@@ -345,7 +380,7 @@ static void app_mt_init_impl(srv_c_app_sig_callback_ft sig_callback,
     //for multithreaded sake and was locked before
     set_signals_callback(sig_callback, true, lock_io);
 
-    fail_callback_init_impl(fail_callback);
+    fail_callback_init_impl(fail_callback, corefile_fail_thread_only);
 
     _sig_initiated = true;
 }
@@ -395,42 +430,46 @@ void srv_c_app_init_default_signals_should_register(void)
 
 void SRV_PRIV_C_WRAPPABLE_FUNC(srv_c_app_init_daemon)(srv_c_app_exit_callback_ft exit_callback,
                                                       srv_c_app_sig_callback_ft sig_callback,
-                                                      srv_c_app_fail_callback_ft fail_callback)
+                                                      srv_c_app_fail_callback_ft fail_callback,
+                                                      bool corefile_fail_thread_only)
 {
     daemon_init_impl(exit_callback);
 
-    app_init_impl(sig_callback, fail_callback, true);
+    app_init_impl(sig_callback, fail_callback, corefile_fail_thread_only, true);
 }
 
 void SRV_PRIV_C_WRAPPABLE_FUNC(srv_c_app_init)(srv_c_app_exit_callback_ft exit_callback,
                                                srv_c_app_sig_callback_ft sig_callback,
                                                srv_c_app_fail_callback_ft fail_callback,
+                                               bool corefile_fail_thread_only,
                                                bool lock_io)
 {
     if (exit_callback)
         atexit(exit_callback);
 
-    app_init_impl(sig_callback, fail_callback, lock_io);
+    app_init_impl(sig_callback, fail_callback, corefile_fail_thread_only, lock_io);
 }
 
 void SRV_PRIV_C_WRAPPABLE_FUNC(srv_c_app_mt_init_daemon)(srv_c_app_exit_callback_ft exit_callback,
                                                          srv_c_app_sig_callback_ft sig_callback,
-                                                         srv_c_app_fail_callback_ft fail_callback)
+                                                         srv_c_app_fail_callback_ft fail_callback,
+                                                         bool corefile_fail_thread_only)
 {
     daemon_init_impl(exit_callback);
 
-    app_mt_init_impl(sig_callback, fail_callback, true);
+    app_mt_init_impl(sig_callback, fail_callback, corefile_fail_thread_only, true);
 }
 
 void SRV_PRIV_C_WRAPPABLE_FUNC(srv_c_app_mt_init)(srv_c_app_exit_callback_ft exit_callback,
                                                   srv_c_app_sig_callback_ft sig_callback,
                                                   srv_c_app_fail_callback_ft fail_callback,
+                                                  bool corefile_fail_thread_only,
                                                   bool lock_io)
 {
     if (exit_callback)
         atexit(exit_callback);
 
-    app_mt_init_impl(sig_callback, fail_callback, lock_io);
+    app_mt_init_impl(sig_callback, fail_callback, corefile_fail_thread_only, lock_io);
 }
 
 void srv_c_app_mt_wait_sig_callback(srv_c_app_sig_callback_ft sig_callback)
@@ -458,7 +497,7 @@ void srv_c_app_mt_wait_sig_callback(srv_c_app_sig_callback_ft sig_callback)
     sig_callback(inbound_sig);
 }
 
-void srv_c_app_abort()
+void srv_c_app_abort(int signo)
 {
     if (!_fail_core_creation_lock)
     {
@@ -472,7 +511,10 @@ void srv_c_app_abort()
     }
     else
     {
-        _exit(EXIT_FAILURE_SIG_BASE_ + SIGABRT);
+        if (!signo)
+            signo = SIGABRT;
+
+        _exit(EXIT_FAILURE_SIG_BASE_ + signo);
     }
 }
 

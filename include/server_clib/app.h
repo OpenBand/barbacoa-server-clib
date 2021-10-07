@@ -20,26 +20,27 @@ void srv_c_app_init_default_signals_should_register(void);
 
 void srv_c_app_init_daemon(srv_c_app_exit_callback_ft exit_callback,
                            srv_c_app_sig_callback_ft sig_callback,
-                           srv_c_app_fail_callback_ft fail_callback);
+                           srv_c_app_fail_callback_ft fail_callback,
+                           BOOL corefile_fail_thread_only);
 
 void srv_c_app_init(srv_c_app_exit_callback_ft exit_callback,
                     srv_c_app_sig_callback_ft sig_callback,
                     srv_c_app_fail_callback_ft fail_callback,
+                    BOOL corefile_fail_thread_only,
                     BOOL lock_io);
 
 /* srv_c_app_mt_init_daemon, srv_c_app_mt_init - for multithreaded application.
  * It is used synchronous signal technik */
 
-// sig_callback assume hardware signals only
 void srv_c_app_mt_init_daemon(srv_c_app_exit_callback_ft exit_callback,
                               srv_c_app_sig_callback_ft sig_callback,
-                              srv_c_app_fail_callback_ft fail_callback);
+                              srv_c_app_fail_callback_ft fail_callback,
+                              BOOL corefile_fail_thread_only);
 
-// sig_callback assume hardware signals only
-//
 void srv_c_app_mt_init(srv_c_app_exit_callback_ft exit_callback,
                        srv_c_app_sig_callback_ft sig_callback,
                        srv_c_app_fail_callback_ft fail_callback,
+                       BOOL corefile_fail_thread_only,
                        BOOL lock_io);
 
 // Call this method in special single thread!
@@ -47,7 +48,7 @@ void srv_c_app_mt_init(srv_c_app_exit_callback_ft exit_callback,
 void srv_c_app_mt_wait_sig_callback(srv_c_app_sig_callback_ft sig_callback);
 
 // Call 'abort' with default signal handler
-void srv_c_app_abort();
+void srv_c_app_abort(int signo);
 
 // Lock signal receiving if it had not already locked
 //(by 'srv_c_app_init', 'srv_c_app_mt_init' functions
@@ -57,6 +58,7 @@ void srv_c_app_lock_signal(int signo);
 void srv_c_app_unlock_signal(int signo);
 
 /* Info */
+
 size_t srv_c_app_get_alter_stack_size(void);
 
 BOOL srv_c_is_fail_signal(int signo);

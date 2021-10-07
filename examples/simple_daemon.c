@@ -82,7 +82,7 @@ static void simple_payload(void)
 int main(void)
 {
     srv_c_app_init_default_signals_should_register();
-    srv_c_app_init_daemon(exit_handler, signal_handler, NULL);
+    srv_c_app_init_daemon(exit_handler, signal_handler, NULL, TRUE);
 
     simple_payload();
 
