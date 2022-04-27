@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 // it is interruption resistant usleep
-void wpause(int milliseconds);
+void srv_c_wpause(int milliseconds);
 #ifdef __cplusplus
 }
 #endif

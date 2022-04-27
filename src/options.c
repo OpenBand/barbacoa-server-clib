@@ -28,7 +28,7 @@ static const char* get_program_name()
     return basename(buffer);
 }
 
-static const char* get_argument_info(const options_ctx_t* pctx, struct option* pos_long_option)
+static const char* get_argument_info(const srv_c_options_ctx_t* pctx, struct option* pos_long_option)
 {
     if (!pctx || !pos_long_option)
         return "";
@@ -43,7 +43,7 @@ static const char* get_argument_info(const options_ctx_t* pctx, struct option* p
     return "";
 }
 
-static BOOL get_info(const options_ctx_t* pctx, rubber_ctx_t* prbuff, struct option* plong_options)
+static BOOL get_info(const srv_c_options_ctx_t* pctx, srv_c_rubber_ctx_t* prbuff, struct option* plong_options)
 {
     if (!pctx)
         return false;
@@ -54,7 +54,7 @@ static BOOL get_info(const options_ctx_t* pctx, rubber_ctx_t* prbuff, struct opt
     const char* DELIM = "~";
 
     int wtn = 0;
-    wtn = snprintf(rubber_pos(prbuff, &wtn), rubber_rest(prbuff, &wtn),
+    wtn = snprintf(srv_c_rubber_pos(prbuff, &wtn), srv_c_rubber_rest(prbuff, &wtn),
                    "[%s] Version %d.%d.%d."
 #if !defined(SRV_C_OPT_MUTE_DATE)
                    " Build %s."
@@ -69,17 +69,17 @@ static BOOL get_info(const options_ctx_t* pctx, rubber_ctx_t* prbuff, struct opt
     if (wtn < 1)
         return false;
 
-    wtn = snprintf(rubber_pos(prbuff, &wtn), rubber_rest(prbuff, &wtn), "%s\n", DELIM);
+    wtn = snprintf(srv_c_rubber_pos(prbuff, &wtn), srv_c_rubber_rest(prbuff, &wtn), "%s\n", DELIM);
     if (wtn < 1)
         return false;
 
     if (pctx->description[0])
     {
-        wtn = snprintf(rubber_pos(prbuff, &wtn), rubber_rest(prbuff, &wtn), "%s\n", pctx->description);
+        wtn = snprintf(srv_c_rubber_pos(prbuff, &wtn), srv_c_rubber_rest(prbuff, &wtn), "%s\n", pctx->description);
         if (wtn < 1)
             return false;
 
-        wtn = snprintf(rubber_pos(prbuff, &wtn), rubber_rest(prbuff, &wtn), "%s\n", DELIM);
+        wtn = snprintf(srv_c_rubber_pos(prbuff, &wtn), srv_c_rubber_rest(prbuff, &wtn), "%s\n", DELIM);
         if (wtn < 1)
             return false;
     }
@@ -96,9 +96,9 @@ static BOOL get_info(const options_ctx_t* pctx, rubber_ctx_t* prbuff, struct opt
         }
         switch (short_opt[0])
         {
-        case REQUIRED_ARGUMENT_SYMBOL:
-        case OPTIONAL_ARGUMENT_SYMBOL:
-            wtn = snprintf(rubber_pos(prbuff, &wtn), rubber_rest(prbuff, &wtn),
+        case SRV_C_REQUIRED_ARGUMENT_SYMBOL:
+        case SRV_C_OPTIONAL_ARGUMENT_SYMBOL:
+            wtn = snprintf(srv_c_rubber_pos(prbuff, &wtn), srv_c_rubber_rest(prbuff, &wtn),
                            "%s"
                            "\t[%s]\n",
                            get_program_name(), (pdesc) ? pdesc : get_argument_info(pctx, pos_long_options));
@@ -106,14 +106,14 @@ static BOOL get_info(const options_ctx_t* pctx, rubber_ctx_t* prbuff, struct opt
         default:
             if (strlen(pos_long_options->name) == 1 && !strncmp(short_opt, pos_long_options->name, sizeof(short_opt)))
             {
-                wtn = snprintf(rubber_pos(prbuff, &wtn), rubber_rest(prbuff, &wtn),
+                wtn = snprintf(srv_c_rubber_pos(prbuff, &wtn), srv_c_rubber_rest(prbuff, &wtn),
                                "-%s"
                                "\t%s\n",
                                short_opt, (pdesc) ? pdesc : get_argument_info(pctx, pos_long_options));
             }
             else
             {
-                wtn = snprintf(rubber_pos(prbuff, &wtn), rubber_rest(prbuff, &wtn),
+                wtn = snprintf(srv_c_rubber_pos(prbuff, &wtn), srv_c_rubber_rest(prbuff, &wtn),
                                "-%s, --%s"
                                "\t%s\n",
                                short_opt, pos_long_options->name,
@@ -128,9 +128,9 @@ static BOOL get_info(const options_ctx_t* pctx, rubber_ctx_t* prbuff, struct opt
     return true;
 }
 
-void options_init(options_ctx_t* pctx, const char* description, const char* short_options_names_only)
+void srv_c_options_init(srv_c_options_ctx_t* pctx, const char* description, const char* short_options_names_only)
 {
-    bzero(pctx, sizeof(options_ctx_t));
+    bzero(pctx, sizeof(srv_c_options_ctx_t));
 
     if (description)
         strncpy(pctx->description, description, sizeof(pctx->description));
@@ -140,9 +140,9 @@ void options_init(options_ctx_t* pctx, const char* description, const char* shor
     pctx->show_info = true;
 }
 
-void options_init_stealth(options_ctx_t* pctx, const char* short_options_names_only)
+void srv_c_options_init_stealth(srv_c_options_ctx_t* pctx, const char* short_options_names_only)
 {
-    bzero(pctx, sizeof(options_ctx_t));
+    bzero(pctx, sizeof(srv_c_options_ctx_t));
 
     if (short_options_names_only)
         strncpy(pctx->short_options_names_only, short_options_names_only, sizeof(pctx->short_options_names_only));
@@ -150,7 +150,7 @@ void options_init_stealth(options_ctx_t* pctx, const char* short_options_names_o
     pctx->show_info = false;
 }
 
-int options_parse(const options_ctx_t* pctx,
+int srv_c_options_parse(const srv_c_options_ctx_t* pctx,
                   int argc,
                   char* argv[],
                   BOOL (*pset_option)(const char short_opt, const char* val))
@@ -158,7 +158,7 @@ int options_parse(const options_ctx_t* pctx,
     if (!pctx)
         return -1;
 
-    options_get_option_details_ft pget_option_long_name = pctx->get_option_long_name;
+    srv_c_options_get_option_details_ft pget_option_long_name = pctx->get_option_long_name;
     if (!pget_option_long_name)
         pget_option_long_name = get_long_name_copy_short;
 
@@ -179,13 +179,13 @@ int options_parse(const options_ctx_t* pctx,
             (*pos_short_options) = (*pos_short_options_names_only);
             (*pos_long_options).name = pget_option_long_name(*pos_short_options_names_only);
             (*pos_long_options).val = (*pos_short_options_names_only);
-            if (pos_short_options_names_only[1] == REQUIRED_ARGUMENT_SYMBOL)
+            if (pos_short_options_names_only[1] == SRV_C_REQUIRED_ARGUMENT_SYMBOL)
             {
                 pos_short_options++;
                 (*pos_short_options) = ':';
                 (*pos_long_options).has_arg = required_argument;
             }
-            else if (pos_short_options_names_only[1] == OPTIONAL_ARGUMENT_SYMBOL)
+            else if (pos_short_options_names_only[1] == SRV_C_OPTIONAL_ARGUMENT_SYMBOL)
             {
                 pos_short_options++;
                 (*pos_short_options) = ':';
@@ -195,10 +195,10 @@ int options_parse(const options_ctx_t* pctx,
             {
                 switch (pos_short_options_names_only[0])
                 {
-                case REQUIRED_ARGUMENT_SYMBOL:
+                case SRV_C_REQUIRED_ARGUMENT_SYMBOL:
                     (*pos_long_options).has_arg = required_argument;
                     break;
-                case OPTIONAL_ARGUMENT_SYMBOL:
+                case SRV_C_OPTIONAL_ARGUMENT_SYMBOL:
                     (*pos_long_options).has_arg = optional_argument;
                     break;
                 default:
@@ -207,8 +207,8 @@ int options_parse(const options_ctx_t* pctx,
             }
             pos_short_options++;
             pos_short_options_names_only++;
-            if (*pos_short_options_names_only == REQUIRED_ARGUMENT_SYMBOL
-                || *pos_short_options_names_only == OPTIONAL_ARGUMENT_SYMBOL)
+            if (*pos_short_options_names_only == SRV_C_REQUIRED_ARGUMENT_SYMBOL
+                || *pos_short_options_names_only == SRV_C_OPTIONAL_ARGUMENT_SYMBOL)
                 pos_short_options_names_only++;
             pos_long_options++;
         }
@@ -269,23 +269,23 @@ int options_parse(const options_ctx_t* pctx,
         }
         if (flg_usage)
         {
-            rubber_ctx_t ctx;
+            srv_c_rubber_ctx_t ctx;
             char info[PIPE_BUF];
 
-            if (!rubber_init_from_buff(&ctx, info, sizeof info, 0, true))
+            if (!srv_c_rubber_init_from_buff(&ctx, info, sizeof info, 0, true))
                 return -1;
 
             SRV_C_CALL(get_info(pctx, &ctx, long_options));
             if (flg_error)
             {
-                fprintf(stderr, "%s\n", rubber_get(&ctx));
+                fprintf(stderr, "%s\n", srv_c_rubber_get(&ctx));
             }
             else
             {
-                printf("%s\n", rubber_get(&ctx));
+                printf("%s\n", srv_c_rubber_get(&ctx));
             }
 
-            rubber_destroy(&ctx);
+            srv_c_rubber_destroy(&ctx);
         }
 
         if (flg_error || flg_usage)
@@ -295,22 +295,22 @@ int options_parse(const options_ctx_t* pctx,
     return optind;
 }
 
-const char* options_parse_stealth_single_option(int argc, char* argv[], BOOL required)
+const char* srv_c_options_parse_stealth_single_option(int argc, char* argv[], BOOL required)
 {
-    return options_parse_single_option(argc, argv, required, NULL);
+    return srv_c_options_parse_single_option(argc, argv, required, NULL);
 }
 
-const char* options_parse_single_option(int argc, char* argv[], BOOL required, const options_ctx_t* pctx)
+const char* srv_c_options_parse_single_option(int argc, char* argv[], BOOL required, const srv_c_options_ctx_t* pctx)
 {
     if (argc < 2)
         return NULL;
 
-    options_ctx_t ctx;
+    srv_c_options_ctx_t ctx;
 
     char options[2] = { 0 };
-    options[0] = (required) ? REQUIRED_ARGUMENT_SYMBOL : OPTIONAL_ARGUMENT_SYMBOL;
+    options[0] = (required) ? SRV_C_REQUIRED_ARGUMENT_SYMBOL : SRV_C_OPTIONAL_ARGUMENT_SYMBOL;
 
-    options_init_stealth(&ctx, options);
+    srv_c_options_init_stealth(&ctx, options);
     if (pctx)
     {
         ctx.show_info = pctx->show_info;
@@ -322,7 +322,7 @@ const char* options_parse_single_option(int argc, char* argv[], BOOL required, c
         strncpy(ctx.optional_argument_description, pctx->optional_argument_description, MAX_INPUT);
     }
 
-    int r = options_parse(&ctx, argc, argv, NULL);
+    int r = srv_c_options_parse(&ctx, argc, argv, NULL);
     if (r > 0)
         return argv[1];
     return NULL;

@@ -8,9 +8,9 @@
 extern "C" {
 #endif
 
-uint64_t create_pseudo_random(const uint64_t seed, const uint64_t offset);
+uint64_t srv_c_create_pseudo_random(const uint64_t seed, const uint64_t offset);
 
-uint32_t create_pseudo_random_from_time(const uint32_t offset);
+uint32_t srv_c_create_pseudo_random_from_time(const uint32_t offset);
 
 #ifdef __cplusplus
 }

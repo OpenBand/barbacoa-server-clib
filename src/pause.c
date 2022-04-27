@@ -10,7 +10,7 @@ static __suseconds_t get_milliseconds(struct timeval* ptv)
     return ret / 1000;
 }
 
-void wpause(int milliseconds)
+void srv_c_wpause(int milliseconds)
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);

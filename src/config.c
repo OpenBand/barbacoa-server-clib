@@ -9,12 +9,12 @@ extern char* strptime(const char* s, const char* format, struct tm* tm);
 
 #include <stdlib.h>
 
-static BOOL is_valid_context(const config_ctx_t* pctx)
+static BOOL is_valid_context(const srv_c_config_ctx_t* pctx)
 {
     return pctx && pctx->pline && pctx->ptok && pctx->ptok->end > pctx->ptok->start;
 }
 
-static BOOL get_to(const config_ctx_t* pctx, char* buff, const size_t sz)
+static BOOL get_to(const srv_c_config_ctx_t* pctx, char* buff, const size_t sz)
 {
     if (!is_valid_context(pctx) || !buff || !sz)
         return false;
@@ -29,7 +29,7 @@ static BOOL get_to(const config_ctx_t* pctx, char* buff, const size_t sz)
     return true;
 }
 
-static BOOL get_key(const config_ctx_t* pctx, char* buff, const size_t sz)
+static BOOL get_key(const srv_c_config_ctx_t* pctx, char* buff, const size_t sz)
 {
     if (!is_valid_context(pctx))
         return false;
@@ -40,7 +40,7 @@ static BOOL get_key(const config_ctx_t* pctx, char* buff, const size_t sz)
     return get_to(pctx, buff, sz);
 }
 
-static BOOL check_for_comment(const config_ctx_t* pctx)
+static BOOL check_for_comment(const srv_c_config_ctx_t* pctx)
 {
     if (!is_valid_context(pctx))
         return false;
@@ -52,7 +52,7 @@ static BOOL check_for_comment(const config_ctx_t* pctx)
     return *pval == '#';
 }
 
-static BOOL parse_config_line(const char* pline, const size_t sz, config_get_value_ft callback)
+static BOOL parse_config_line(const char* pline, const size_t sz, srv_c_config_get_value_ft callback)
 {
     jsmn_parser parser;
     jsmn_init(&parser);
@@ -71,7 +71,7 @@ static BOOL parse_config_line(const char* pline, const size_t sz, config_get_val
 
     jsmntok_t* ptok = pptok;
 
-    config_ctx_t ctx;
+    srv_c_config_ctx_t ctx;
     bzero(&ctx, sizeof(ctx));
     ctx.pline = pline;
     ctx.ptok = ptok;
@@ -115,7 +115,7 @@ static BOOL parse_config_line(const char* pline, const size_t sz, config_get_val
     return true;
 }
 
-BOOL config_load(const char* path_to_config, config_get_value_ft callback)
+BOOL srv_c_config_load(const char* path_to_config, srv_c_config_get_value_ft callback)
 {
     FILE* fp = fopen(path_to_config, "r");
     if (!fp)
@@ -138,7 +138,7 @@ BOOL config_load(const char* path_to_config, config_get_value_ft callback)
     return result;
 }
 
-BOOL config_get_string(const config_ctx_t* pctx, char* buff, const size_t sz)
+BOOL srv_c_config_get_string(const srv_c_config_ctx_t* pctx, char* buff, const size_t sz)
 {
     if (!is_valid_context(pctx))
         return false;
@@ -148,7 +148,7 @@ BOOL config_get_string(const config_ctx_t* pctx, char* buff, const size_t sz)
 
     return get_to(pctx, buff, sz);
 }
-BOOL config_get_int(const config_ctx_t* pctx, int* val)
+BOOL srv_c_config_get_int(const srv_c_config_ctx_t* pctx, int* val)
 {
     if (!is_valid_context(pctx) || !val)
         return false;
@@ -171,7 +171,7 @@ BOOL config_get_int(const config_ctx_t* pctx, int* val)
 
     return false;
 }
-BOOL config_get_bool(const config_ctx_t* pctx, BOOL* val)
+BOOL srv_c_config_get_bool(const srv_c_config_ctx_t* pctx, BOOL* val)
 {
     if (!is_valid_context(pctx) || !val)
         return false;
@@ -212,8 +212,8 @@ BOOL config_get_bool(const config_ctx_t* pctx, BOOL* val)
     return true;
 }
 
-BOOL config_get_string_array(
-    const config_ctx_t* pctx, char** pbuff, size_t* psz, const size_t item_sz, const size_t max_sz)
+BOOL srv_c_config_get_string_array(
+    const srv_c_config_ctx_t* pctx, char** pbuff, size_t* psz, const size_t item_sz, const size_t max_sz)
 {
     if (!is_valid_context(pctx) || !pbuff || !psz || !item_sz || !max_sz)
         return false;
@@ -233,11 +233,11 @@ BOOL config_get_string_array(
     jsmntok_t* ptok_array = (*pctx->pptok_array);
     for (size_t ci = 0; ci < sz; ++ci)
     {
-        config_ctx_t item_context;
+        srv_c_config_ctx_t item_context;
         item_context.pline = pctx->pline;
         item_context.ptok = ptok_array;
         item_context.pptok_array = NULL;
-        if (!config_get_string(&item_context, pval_item, item_sz))
+        if (!srv_c_config_get_string(&item_context, pval_item, item_sz))
         {
             free(pval);
             return false;
@@ -252,7 +252,7 @@ BOOL config_get_string_array(
     return true;
 }
 
-BOOL config_get_int_array(const config_ctx_t* pctx, int** ppval, size_t* psz, const size_t max_sz)
+BOOL srv_c_config_get_int_array(const srv_c_config_ctx_t* pctx, int** ppval, size_t* psz, const size_t max_sz)
 {
     if (!is_valid_context(pctx) || !ppval || !psz || !max_sz)
         return false;
@@ -268,12 +268,12 @@ BOOL config_get_int_array(const config_ctx_t* pctx, int** ppval, size_t* psz, co
     jsmntok_t* ptok_array = (*pctx->pptok_array);
     for (size_t ci = 0; ci < sz; ++ci)
     {
-        config_ctx_t item_context;
+        srv_c_config_ctx_t item_context;
         item_context.pline = pctx->pline;
         item_context.ptok = ptok_array;
         item_context.pptok_array = NULL;
         int val = 0;
-        if (!config_get_int(&item_context, &val))
+        if (!srv_c_config_get_int(&item_context, &val))
         {
             free(pval);
             return false;
@@ -288,7 +288,7 @@ BOOL config_get_int_array(const config_ctx_t* pctx, int** ppval, size_t* psz, co
     return true;
 }
 
-BOOL config_get_bool_array(const config_ctx_t* pctx, int** ppval, size_t* psz, const size_t max_sz)
+BOOL srv_c_config_get_bool_array(const srv_c_config_ctx_t* pctx, int** ppval, size_t* psz, const size_t max_sz)
 {
     if (!is_valid_context(pctx) || !ppval || !psz || !max_sz)
         return false;
@@ -304,12 +304,12 @@ BOOL config_get_bool_array(const config_ctx_t* pctx, int** ppval, size_t* psz, c
     jsmntok_t* ptok_array = (*pctx->pptok_array);
     for (size_t ci = 0; ci < sz; ++ci)
     {
-        config_ctx_t item_context;
+        srv_c_config_ctx_t item_context;
         item_context.pline = pctx->pline;
         item_context.ptok = ptok_array;
         item_context.pptok_array = NULL;
         BOOL val = false;
-        if (!config_get_bool(&item_context, &val))
+        if (!srv_c_config_get_bool(&item_context, &val))
         {
             free(pval);
             return false;
@@ -324,10 +324,10 @@ BOOL config_get_bool_array(const config_ctx_t* pctx, int** ppval, size_t* psz, c
     return true;
 }
 
-static BOOL config_get_time(const config_ctx_t* pctx, const char* format, const BOOL should_utc, time_t* val)
+static BOOL config_get_time(const srv_c_config_ctx_t* pctx, const char* format, const BOOL should_utc, time_t* val)
 {
     char buff[MAX_INPUT];
-    if (!config_get_string(pctx, buff, MAX_INPUT))
+    if (!srv_c_config_get_string(pctx, buff, MAX_INPUT))
         return false;
 
     struct tm val_;
@@ -340,12 +340,12 @@ static BOOL config_get_time(const config_ctx_t* pctx, const char* format, const 
     return true;
 }
 
-BOOL config_get_local_time(const config_ctx_t* pctx, const char* format, time_t* val)
+BOOL srv_c_config_get_local_time(const srv_c_config_ctx_t* pctx, const char* format, time_t* val)
 {
     return config_get_time(pctx, format, false, val);
 }
 
-BOOL config_get_utc_time(const config_ctx_t* pctx, const char* format, time_t* val)
+BOOL srv_c_config_get_utc_time(const srv_c_config_ctx_t* pctx, const char* format, time_t* val)
 {
     return config_get_time(pctx, format, true, val);
 }

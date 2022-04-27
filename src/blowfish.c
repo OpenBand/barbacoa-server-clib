@@ -6,7 +6,7 @@
 
 #define ROUND_N 16
 
-static uint32_t F(blowfish_ctx_t* ctx, uint32_t x)
+static uint32_t F(srv_c_blowfish_ctx_t* ctx, uint32_t x)
 {
     uint16_t a, b, c, d;
     uint32_t y;
@@ -25,7 +25,7 @@ static uint32_t F(blowfish_ctx_t* ctx, uint32_t x)
     return y;
 }
 
-BOOL blowfish_init(blowfish_ctx_t* ctx, uint8_t* key, int32_t keyLen)
+BOOL srv_c_blowfish_init(srv_c_blowfish_ctx_t* ctx, uint8_t* key, int32_t keyLen)
 {
     if (!ctx || !key || !keyLen)
         return false;
@@ -58,7 +58,7 @@ BOOL blowfish_init(blowfish_ctx_t* ctx, uint8_t* key, int32_t keyLen)
 
     for (i = 0; i < ROUND_N + 2; i += 2)
     {
-        blowfish_encrypt_chunk(ctx, &datal, &datar);
+        srv_c_blowfish_encrypt_chunk(ctx, &datal, &datar);
         ctx->P[i] = datal;
         ctx->P[i + 1] = datar;
     }
@@ -67,7 +67,7 @@ BOOL blowfish_init(blowfish_ctx_t* ctx, uint8_t* key, int32_t keyLen)
     {
         for (j = 0; j < 256; j += 2)
         {
-            blowfish_encrypt_chunk(ctx, &datal, &datar);
+            srv_c_blowfish_encrypt_chunk(ctx, &datal, &datar);
             ctx->S[i][j] = datal;
             ctx->S[i][j + 1] = datar;
         }
@@ -76,7 +76,7 @@ BOOL blowfish_init(blowfish_ctx_t* ctx, uint8_t* key, int32_t keyLen)
     return true;
 }
 
-BOOL blowfish_encrypt_chunk(blowfish_ctx_t* ctx, uint32_t* xl, uint32_t* xr)
+BOOL srv_c_blowfish_encrypt_chunk(srv_c_blowfish_ctx_t* ctx, uint32_t* xl, uint32_t* xr)
 {
     if (!ctx || !xl || !xr)
         return false;
@@ -112,7 +112,7 @@ BOOL blowfish_encrypt_chunk(blowfish_ctx_t* ctx, uint32_t* xl, uint32_t* xr)
     return true;
 }
 
-BOOL blowfish_decrypt_chunk(blowfish_ctx_t* ctx, uint32_t* xl, uint32_t* xr)
+BOOL srv_c_blowfish_decrypt_chunk(srv_c_blowfish_ctx_t* ctx, uint32_t* xl, uint32_t* xr)
 {
     if (!ctx || !xl || !xr)
         return false;
@@ -150,7 +150,7 @@ BOOL blowfish_decrypt_chunk(blowfish_ctx_t* ctx, uint32_t* xl, uint32_t* xr)
     return true;
 }
 
-BOOL blowfish_destroy(blowfish_ctx_t* pctx)
+BOOL srv_c_blowfish_destroy(srv_c_blowfish_ctx_t* pctx)
 {
     if (!pctx)
         return false;
@@ -159,12 +159,12 @@ BOOL blowfish_destroy(blowfish_ctx_t* pctx)
     return true;
 }
 
-size_t blowfish_get_min_chunk_length(void)
+size_t srv_c_blowfish_get_min_chunk_length(void)
 {
     return 8;
 }
 
-size_t blowfish_get_stream_output_length(size_t input_long)
+size_t srv_c_blowfish_get_stream_output_length(size_t input_long)
 {
     long input_long_ = (long)input_long;
     long tmp = input_long_ % 8;
@@ -177,12 +177,12 @@ size_t blowfish_get_stream_output_length(size_t input_long)
         return (size_t)input_long_;
 }
 
-static long blowfish_stream_process(blowfish_ctx_t* ctx,
+static long blowfish_stream_process(srv_c_blowfish_ctx_t* ctx,
                                     const unsigned char* p_input,
                                     const size_t input_sz,
                                     unsigned char* p_output,
                                     const size_t output_sz,
-                                    BOOL (*blowfish_process_f)(blowfish_ctx_t*, uint32_t*, uint32_t*),
+                                    BOOL (*blowfish_process_f)(srv_c_blowfish_ctx_t*, uint32_t*, uint32_t*),
                                     BOOL ecrypt)
 {
     if (!ctx || !p_input || !input_sz || !p_output || !output_sz)
@@ -251,20 +251,20 @@ static long blowfish_stream_process(blowfish_ctx_t* ctx,
     return input_sz - in_rest + in_rest_fin;
 }
 
-long blowfish_stream_encrypt(blowfish_ctx_t* ctx,
+long srv_c_blowfish_stream_encrypt(srv_c_blowfish_ctx_t* ctx,
                              const unsigned char* p_input,
                              const size_t input_sz,
                              unsigned char* p_output,
                              const size_t output_sz)
 {
-    return blowfish_stream_process(ctx, p_input, input_sz, p_output, output_sz, blowfish_encrypt_chunk, true);
+    return blowfish_stream_process(ctx, p_input, input_sz, p_output, output_sz, srv_c_blowfish_encrypt_chunk, true);
 }
 
-long blowfish_stream_decrypt(blowfish_ctx_t* ctx,
+long srv_c_blowfish_stream_decrypt(srv_c_blowfish_ctx_t* ctx,
                              const unsigned char* p_input,
                              const size_t input_sz,
                              unsigned char* p_output,
                              const size_t output_sz)
 {
-    return blowfish_stream_process(ctx, p_input, input_sz, p_output, output_sz, blowfish_decrypt_chunk, false);
+    return blowfish_stream_process(ctx, p_input, input_sz, p_output, output_sz, srv_c_blowfish_decrypt_chunk, false);
 }

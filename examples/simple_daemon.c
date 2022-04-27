@@ -1,30 +1,88 @@
 #include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
 
-#include <server_clib/server.h>
+#include <server_clib/app.h>
 #include <server_clib/pause.h>
 
 #include <stdnoreturn.h>
 
-static noreturn void simple_die(void)
+static volatile sig_atomic_t job_done = 0;
+static char activity_file_path[PATH_MAX] = { 0 };
+
+static void create_activity_file()
 {
-    _exit(exit_code_ok);
+    char buff[PATH_MAX] = { 0 };
+
+    FILE* f = fopen("/proc/self/comm", "rb");
+    if (f == NULL)
+        abort();
+    size_t sz = fread(buff, sizeof(*buff), sizeof(buff) / sizeof(*buff), f);
+    if (sz < 1)
+        abort();
+    fclose(f);
+
+    char* p = strchr(buff, '\n');
+    if (p == NULL)
+    {
+        p = buff;
+        p += sz;
+    }
+    strcpy(p, ".XXXXXX");
+    const char* TMP_DIR = "/tmp/";
+    sz = strlen(TMP_DIR);
+    p = buff;
+    p += sz;
+    strcpy(p, buff);
+    strncpy(buff, TMP_DIR, sz);
+
+    f = fdopen(mkstemp(buff), "wb");
+    if (f == NULL)
+        abort();
+
+    strcpy(activity_file_path, buff);
+
+    strcpy(buff, "Hi. I'm daemon Blablabla here\n");
+    sz = fwrite(buff, sizeof(*buff), sizeof(buff) / sizeof(*buff), f);
+    if (sz < 1)
+        abort();
+
+    fclose(f);
+
+    job_done = 1;
 }
 
-static noreturn void exit_handler(void)
+static void exit_handler(void)
 {
-    simple_die();
+    if (job_done)
+    {
+        int r = unlink(activity_file_path);
+        if (r != 0)
+            abort();
+    }
+}
+
+static void signal_handler(int signo)
+{
+    if (SIGTERM == signo)
+    {
+        exit_handler(); //_exit doesn't call this
+
+        _exit(exit_code_ok); // 'exit' not allowed for asynchronous signals that are used
+    }
 }
 
 static void simple_payload(void)
 {
-    // wait 30 seconds
-    wpause(30 * 1000);
+    create_activity_file();
+    // wait 60 seconds
+    srv_c_wpause(60 * 1000);
 }
 
 int main(void)
 {
-    server_init_default_signals_should_register();
-    server_init_daemon(exit_handler, NULL);
+    srv_c_app_init_default_signals_should_register();
+    srv_c_app_init_daemon(exit_handler, signal_handler, NULL, TRUE);
 
     simple_payload();
 

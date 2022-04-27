@@ -33,9 +33,9 @@ BOOST_AUTO_TEST_CASE(show_cmd_and_help_check)
     auto processor = [&](int argc, char* argv[]) {
         BOOST_REQUIRE_EQUAL(argc, 2);
         BOOST_REQUIRE_EQUAL(argv[1], "--help");
-        options_ctx_t ctx;
-        options_init(&ctx, NULL, NULL);
-        return options_parse(&ctx, argc, argv, NULL);
+        srv_c_options_ctx_t ctx;
+        srv_c_options_init(&ctx, NULL, NULL);
+        return srv_c_options_parse(&ctx, argc, argv, NULL);
     };
     BOOST_CHECK_EQUAL(process_command_line(processor, "--help"), 0);
 }
@@ -80,14 +80,14 @@ BOOST_AUTO_TEST_CASE(show_cmd_and_help_for_multiple_check)
     };
 
     auto processor = [&](int argc, char* argv[]) {
-        options_ctx_t ctx;
-        options_init(&ctx, "About this program", "ab:c!de!f");
+        srv_c_options_ctx_t ctx;
+        srv_c_options_init(&ctx, "About this program", "ab:c!de!f");
         ctx.get_option_description = get_option_description;
         ctx.get_option_long_name = get_option_long_name;
         ctx.version_major = 1;
         ctx.version_major = 2;
         ctx.version_patch = 333;
-        return options_parse(&ctx, argc, argv, NULL);
+        return srv_c_options_parse(&ctx, argc, argv, NULL);
     };
     BOOST_CHECK_EQUAL(process_command_line(processor, "--help"), 0);
 }
@@ -102,9 +102,9 @@ BOOST_AUTO_TEST_CASE(option_with_no_value_check)
     };
     auto processor = [&](int argc, char* argv[])
     {
-        options_ctx_t ctx;
-        options_init(&ctx, NULL, "t");
-        return options_parse(&ctx, argc, argv, set_option);
+        srv_c_options_ctx_t ctx;
+        srv_c_options_init(&ctx, NULL, "t");
+        return srv_c_options_parse(&ctx, argc, argv, set_option);
     };
     // clang-format on
     BOOST_CHECK_EQUAL(process_command_line(processor, "-t", "file"), 2);
@@ -120,9 +120,9 @@ BOOST_AUTO_TEST_CASE(option_with_no_value_stealth_check)
     };
     auto processor = [&](int argc, char* argv[])
     {
-        options_ctx_t ctx;
-        options_init_stealth(&ctx, "t");
-        return options_parse(&ctx, argc, argv, set_option);
+        srv_c_options_ctx_t ctx;
+        srv_c_options_init_stealth(&ctx, "t");
+        return srv_c_options_parse(&ctx, argc, argv, set_option);
     };
     // clang-format on
     BOOST_CHECK_EQUAL(process_command_line(processor, "-t", "file"), 2);
@@ -139,9 +139,9 @@ BOOST_AUTO_TEST_CASE(option_with_requied_value_check)
     };
     auto processor = [&](int argc, char* argv[])
     {
-        options_ctx_t ctx;
-        options_init_stealth(&ctx, "t!");
-        return options_parse(&ctx, argc, argv, set_option);
+        srv_c_options_ctx_t ctx;
+        srv_c_options_init_stealth(&ctx, "t!");
+        return srv_c_options_parse(&ctx, argc, argv, set_option);
     };
     // clang-format on
     BOOST_CHECK_EQUAL(process_command_line(processor, "-t", "file"), 3);
@@ -163,10 +163,10 @@ BOOST_AUTO_TEST_CASE(option_with_long_name_check)
     };
     auto processor = [&](int argc, char* argv[])
     {
-        options_ctx_t ctx;
-        options_init_stealth(&ctx, "t!");
+        srv_c_options_ctx_t ctx;
+        srv_c_options_init_stealth(&ctx, "t!");
         ctx.get_option_long_name = get_option_long_name;
-        return options_parse(&ctx, argc, argv, set_option);
+        return srv_c_options_parse(&ctx, argc, argv, set_option);
     };
     // clang-format on
     BOOST_CHECK_EQUAL(process_command_line(processor, "--test", "file"), 3);
@@ -188,10 +188,10 @@ BOOST_AUTO_TEST_CASE(option_with_optional_no_value_check)
     };
     auto processor = [&](int argc, char* argv[])
     {
-        options_ctx_t ctx;
-        options_init_stealth(&ctx, "t:");
+        srv_c_options_ctx_t ctx;
+        srv_c_options_init_stealth(&ctx, "t:");
         ctx.get_option_long_name = get_option_long_name;
-        return options_parse(&ctx, argc, argv, set_option);
+        return srv_c_options_parse(&ctx, argc, argv, set_option);
     };
     // clang-format on
     BOOST_CHECK_EQUAL(process_command_line(processor, "--test"), 2);
@@ -213,10 +213,10 @@ BOOST_AUTO_TEST_CASE(option_with_optional_with_value_check)
     };
     auto processor = [&](int argc, char* argv[])
     {
-        options_ctx_t ctx;
-        options_init_stealth(&ctx, "t:");
+        srv_c_options_ctx_t ctx;
+        srv_c_options_init_stealth(&ctx, "t:");
         ctx.get_option_long_name = get_option_long_name;
-        return options_parse(&ctx, argc, argv, set_option);
+        return srv_c_options_parse(&ctx, argc, argv, set_option);
     };
     // clang-format on
     BOOST_CHECK_EQUAL(process_command_line(processor, "--test=file"), 2);
@@ -249,9 +249,9 @@ BOOST_AUTO_TEST_CASE(option_multiple_check)
     };
     auto processor = [&](int argc, char* argv[])
     {
-        options_ctx_t ctx;
-        options_init_stealth(&ctx, "ab:c!d");
-        return options_parse(&ctx, argc, argv, set_option);
+        srv_c_options_ctx_t ctx;
+        srv_c_options_init_stealth(&ctx, "ab:c!d");
+        return srv_c_options_parse(&ctx, argc, argv, set_option);
     };
     // clang-format on
     BOOST_CHECK_EQUAL(process_command_line(processor, "-a", "-b", "value-for-b", "-c", "value-for-c", "-d"), 7);
@@ -304,10 +304,10 @@ BOOST_AUTO_TEST_CASE(option_long_multiple_check)
 
     auto processor = [&](int argc, char* argv[])
     {
-        options_ctx_t ctx;
-        options_init_stealth(&ctx, "ab:c!d");
+        srv_c_options_ctx_t ctx;
+        srv_c_options_init_stealth(&ctx, "ab:c!d");
         ctx.get_option_long_name = get_option_long_name;
-        return options_parse(&ctx, argc, argv, set_option);
+        return srv_c_options_parse(&ctx, argc, argv, set_option);
     };
     // clang-format on
     BOOST_CHECK_EQUAL(process_command_line(processor, "--a", "--optb=value-for-b", "--optc", "value-for-c", "--desc"),
@@ -317,7 +317,7 @@ BOOST_AUTO_TEST_CASE(option_long_multiple_check)
 BOOST_AUTO_TEST_CASE(option_single_required_option_check)
 {
     auto processor = [&](int argc, char* argv[]) {
-        std::string opt = options_parse_stealth_single_option(argc, argv, TRUE);
+        std::string opt = srv_c_options_parse_stealth_single_option(argc, argv, TRUE);
         BOOST_REQUIRE_EQUAL(opt, "path-to-file");
         return 0;
     };
@@ -328,7 +328,7 @@ BOOST_AUTO_TEST_CASE(option_single_required_option_check)
 BOOST_AUTO_TEST_CASE(option_no_single_required_option_check)
 {
     auto processor = [&](int argc, char* argv[]) {
-        const char* r = options_parse_stealth_single_option(argc, argv, TRUE);
+        const char* r = srv_c_options_parse_stealth_single_option(argc, argv, TRUE);
         BOOST_CHECK_PREDICATE(std::equal_to<decltype(null_val)>(), (r)(null_val));
         return 0;
     };
@@ -339,7 +339,7 @@ BOOST_AUTO_TEST_CASE(option_no_single_required_option_check)
 BOOST_AUTO_TEST_CASE(option_single_required_option_help_check)
 {
     auto processor = [&](int argc, char* argv[]) {
-        const char* r = options_parse_stealth_single_option(argc, argv, TRUE);
+        const char* r = srv_c_options_parse_stealth_single_option(argc, argv, TRUE);
         BOOST_CHECK_PREDICATE(std::equal_to<decltype(null_val)>(), (r)(null_val));
         return 0;
     };
@@ -350,7 +350,7 @@ BOOST_AUTO_TEST_CASE(option_single_required_option_help_check)
 BOOST_AUTO_TEST_CASE(option_single_optional_option_check)
 {
     auto processor = [&](int argc, char* argv[]) {
-        std::string opt = options_parse_stealth_single_option(argc, argv, FALSE);
+        std::string opt = srv_c_options_parse_stealth_single_option(argc, argv, FALSE);
         BOOST_REQUIRE_EQUAL(opt, "path-to-file");
         return 0;
     };
@@ -361,7 +361,7 @@ BOOST_AUTO_TEST_CASE(option_single_optional_option_check)
 BOOST_AUTO_TEST_CASE(option_no_single_optional_option_check)
 {
     auto processor = [&](int argc, char* argv[]) {
-        const char* r = options_parse_stealth_single_option(argc, argv, FALSE);
+        const char* r = srv_c_options_parse_stealth_single_option(argc, argv, FALSE);
         BOOST_CHECK_PREDICATE(std::equal_to<decltype(null_val)>(), (r)(null_val));
         return 0;
     };
@@ -372,7 +372,7 @@ BOOST_AUTO_TEST_CASE(option_no_single_optional_option_check)
 BOOST_AUTO_TEST_CASE(option_single_optional_option_help_check)
 {
     auto processor = [&](int argc, char* argv[]) {
-        const char* r = options_parse_stealth_single_option(argc, argv, FALSE);
+        const char* r = srv_c_options_parse_stealth_single_option(argc, argv, FALSE);
         BOOST_CHECK_PREDICATE(std::equal_to<decltype(null_val)>(), (r)(null_val));
         return 0;
     };
@@ -383,9 +383,9 @@ BOOST_AUTO_TEST_CASE(option_single_optional_option_help_check)
 BOOST_AUTO_TEST_CASE(option_without_required_value_check)
 {
     auto processor = [&](int argc, char* argv[]) {
-        options_ctx_t ctx;
-        options_init_stealth(&ctx, "at!b");
-        return options_parse(&ctx, argc, argv, NULL);
+        srv_c_options_ctx_t ctx;
+        srv_c_options_init_stealth(&ctx, "at!b");
+        return srv_c_options_parse(&ctx, argc, argv, NULL);
     };
     // clang-format on
     BOOST_CHECK_EQUAL(process_command_line(processor, "-a", "-t"), -1);

@@ -2,7 +2,7 @@
 
 #include <time.h>
 
-uint64_t create_pseudo_random(const uint64_t seed, const uint64_t offset)
+uint64_t srv_c_create_pseudo_random(const uint64_t seed, const uint64_t offset)
 {
     /// High performance random generator
     /// http://xorshift.di.unimi.it/
@@ -14,9 +14,9 @@ uint64_t create_pseudo_random(const uint64_t seed, const uint64_t offset)
     return r;
 }
 
-uint32_t create_pseudo_random_from_time(const uint32_t offset)
+uint32_t srv_c_create_pseudo_random_from_time(const uint32_t offset)
 {
     time_t now = time(NULL);
 
-    return (uint32_t)create_pseudo_random((uint64_t)now, (uint64_t)offset);
+    return (uint32_t)srv_c_create_pseudo_random((uint64_t)now, (uint64_t)offset);
 }
